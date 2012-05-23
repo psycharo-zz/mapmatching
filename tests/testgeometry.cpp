@@ -45,8 +45,10 @@ void TestGeometry::distanceUTM()
     expectedDist = 160.67261499605;
     UTMNode a = mmatch::toUTM(47.2966133, -122.2486660);
     UTMNode b = mmatch::toUTM(47.2980286, -122.2482361);
-    QVERIFY(fabs(mmatch::distance(a, b)-expectedDist) <= maxError);
+
     qDebug() << mmatch::distance(a, b) << expectedDist;
+    QVERIFY(fabs(mmatch::distance(a, b)-expectedDist) <= maxError);
+
 
     expectedDist = 18.3867374807513;
     a = mmatch::toUTM(47.2964237, -122.2442696);

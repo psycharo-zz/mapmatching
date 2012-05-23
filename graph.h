@@ -14,6 +14,10 @@ using namespace mmatch;
 
 namespace mmatch {
 
+
+/**
+ * @brief The Edge class
+ */
 class Edge
 {
 public:
@@ -40,7 +44,9 @@ public:
 
 
 
-
+/**
+ * @brief The RoadGraph class incapsulates the road structure
+ */
 class RoadGraph
 {
 private:
@@ -59,16 +65,18 @@ public:
     void load(const char *fileNodes, const char *fileEdges, const char *fileGeometry);
 
     //! load all from binary file
-    void load(const char *outputFile);
+    void loadBinary(const char *outputFile);
 
     //! save everything as binary file
-    void save(const char *dst);
+    void saveBinary(const char *dst);
 
 
     // data accessors
     inline const std::vector<UTMNode> &nodes() const { return m_nodes; }
     inline const std::vector<std::vector<const Edge*> > &edges() const { return m_edges; }
     inline const std::vector<const Edge*> &index() const { return m_edgeIndex; }
+    inline const UTMNode &getNode(int32_t eid, int32_t gid) const { return m_edgeIndex[eid]->geometry[gid]; }
+
 
     //! get all outgoing edges for a given node id
     inline const std::vector<const Edge*> &outgoing(int nodeId) const { return m_edges[nodeId]; }

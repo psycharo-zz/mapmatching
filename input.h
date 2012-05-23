@@ -7,21 +7,31 @@
 
 namespace mmatch {
 
-static const char IO_DELIM = ',';
 
+
+/**
+ * @brief The Input class incapsulates vehicle trajectories
+ */
 class Input
 {
 public:
-    Input() {}
+    Input(const char *fileName);
+
     void load(const char *fileName);
 
-    inline const std::vector<WGS84Node> &nodes() const { return m_nodes;}
+    inline const UTMNode& operator[](size_t i) const { return m_nodes[i]; }
+
+    inline const size_t size() const { return m_nodes.size(); }
+
+    inline const std::vector<UTMNode> &nodes() const { return m_nodes;}
 private:
-    std::vector<WGS84Node> m_nodes;
+    std::vector<UTMNode> m_nodes;
 };
 
 
-
+/**
+ * @brief The Output class is used for storing/loading output in the competition format
+ */
 class Output
 {
 public:
@@ -29,7 +39,7 @@ public:
     {
     public:
         //! the edge the point belongs to
-        int edge;
+        int32_t edge;
         //! the confidence
         float confidence;
 
@@ -38,13 +48,13 @@ public:
             confidence(-1)
         {}
 
-        Estimate(int _edge, float _conf):
+        Estimate(int32_t _edge, float _conf):
             edge(_edge),
             confidence(_conf)
         {}
     };
 
-    Output(int size = 0):
+    Output(size_t size = 0):
         m_estmns(size)
     {}
 
@@ -60,7 +70,7 @@ public:
     void save(const char *fileName) const;
 
     //! set estimation value
-    inline void setEstimation(int id, int edge, float confidence)
+    inline void setEstimation(int32_t id, int32_t edge, float confidence)
     {
         m_estmns[id] = Estimate(edge, confidence);
     }

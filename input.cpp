@@ -1,14 +1,16 @@
 #include "input.h"
 
-#include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include <iomanip>
+//#include <iomanip>
 
-// DEBUG
-#include <iostream>
+using namespace std;
 
 
+Input::Input(const char *fileName)
+{
+    load(fileName);
+}
 
 
 void Input::load(const char *fileName)
@@ -16,9 +18,9 @@ void Input::load(const char *fileName)
     std::ifstream ifinput(fileName);
 
     if (!ifinput.is_open())
-        throw GraphException("can't open input file");
+        throw Exception("can't open input file");
 
-    WGS84Node node(0, 0);
+    double lat, lon;
     std::string s;
     while (getline(ifinput, s))
     {
@@ -28,12 +30,12 @@ void Input::load(const char *fileName)
 
         posL = posR+1;
         posR = s.find(IO_DELIM, posL);
-        node.lat = atof(s.substr(posL, posR-posL).c_str());
+        lat = atof(s.substr(posL, posR-posL).c_str());
 
         posL = posR+1;
-        node.lon = atof(s.substr(posL, s.length()-posL).c_str());
+        lon = atof(s.substr(posL, s.length()-posL).c_str());
 
-        m_nodes.push_back(node);
+        m_nodes.push_back(mmatch::toUTM(lat, lon));
     }
 }
 
@@ -45,7 +47,7 @@ void Output::load(const char *fileName)
     std::ifstream ifoutput(fileName);
 
     if (!ifoutput.is_open())
-        throw GraphException("can't open input file");
+        throw Exception("can't open input file");
 
     m_estmns.clear();
     Estimate estmn;
@@ -73,7 +75,7 @@ void Output::save(const char *fileName) const
     std::ofstream ofoutput(fileName);
 
     if (!ofoutput.is_open())
-        throw GraphException("can't open file for output");
+        throw Exception("can't open file for output");
 
     ofoutput.setf(std::ios_base::floatfield, std::ios_base::fixed);
     ofoutput.precision(2);

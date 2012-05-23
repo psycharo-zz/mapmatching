@@ -1,13 +1,15 @@
 TEMPLATE = app
 CONFIG += console
-CONFIG += qt
+
 
 CONFIG  += qtestlib
+
+OBJECTS_DIR = .obj
 
 SOURCES += main.cpp \
     graph.cpp \
     input.cpp \
-#    learning.cpp \
+    learning.cpp \
     rangetree.cpp
 
 

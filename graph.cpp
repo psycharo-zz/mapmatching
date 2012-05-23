@@ -66,9 +66,8 @@ void RoadGraph::load(const char *fileNodes, const char *fileEdges, const char *f
     ifstream ifnodes(fileNodes);
 
     if (!ifnodes.is_open())
-        throw GraphException("can't open node data");
+        throw Exception("can't open node data");
 
-    UTMNode node;
     double lat, lon;
     int id;
     while (ifnodes >> id >> lat >> lon)
@@ -83,7 +82,7 @@ void RoadGraph::load(const char *fileNodes, const char *fileEdges, const char *f
     ifstream ifgeom(fileGeometry);
 
     if (!ifedges.is_open() || !ifgeom.is_open())
-        throw GraphException("can't open edge data");
+        throw Exception("can't open edge data");
 
     m_edges.resize(m_nodes.size());
 
@@ -109,7 +108,7 @@ void RoadGraph::load(const char *fileNodes, const char *fileEdges, const char *f
 
 
 
-void RoadGraph::load(const char *inputFile)
+void RoadGraph::loadBinary(const char *inputFile)
 {
     ifstream input(inputFile, ios_base::binary);
 
@@ -148,7 +147,7 @@ void RoadGraph::load(const char *inputFile)
 
 
 
-void RoadGraph::save(const char *dst)
+void RoadGraph::saveBinary(const char *dst)
 {
     ofstream output(dst, ios_base::binary);
 
