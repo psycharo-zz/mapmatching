@@ -10,12 +10,12 @@ using namespace std;
 
 #include <iostream>
 
-typedef vector<Point>::iterator VecIt;
+typedef vector<UTMNode>::iterator VecIt;
 
 
-RangeTree::RangeTree(const vector<Point> &nodes)
+RangeTree::RangeTree(const vector<UTMNode> &nodes)
 {
-    vector<Point> points = nodes;
+    vector<UTMNode> points = nodes;
     m_root = build(points.begin(), points.end(), 0);
 }
 
@@ -45,20 +45,20 @@ RangeTree::TreeNode *RangeTree::build(VecIt begin, VecIt end, size_t depth)
     if (type == VERTICAL)
     {
         nth_element(begin, median, end,
-                    [](const Point &p1, const Point &p2) { return p1.x < p2.x; });
+                    [](const UTMNode &p1, const UTMNode &p2) { return p1.x < p2.x; });
 
         medianValue = median->x;
         median = partition(begin, end,
-                           [medianValue](const Point &p) { return p.x < medianValue;});
+                           [medianValue](const UTMNode &p) { return p.x < medianValue;});
     }
     else
     {
         nth_element(begin, median, end,
-                    [](const Point &p1, const Point &p2) { return p1.y < p2.y; });
+                    [](const UTMNode &p1, const UTMNode &p2) { return p1.y < p2.y; });
 
         medianValue = median->y;
         median = partition(begin, end,
-                           [medianValue](const Point &p) { return p.y < medianValue;});
+                           [medianValue](const UTMNode &p) { return p.y < medianValue;});
     }
 
     TreeNode *left = build(begin, median+1, depth+1);
@@ -67,7 +67,7 @@ RangeTree::TreeNode *RangeTree::build(VecIt begin, VecIt end, size_t depth)
 }
 
 
-list<Point> RangeTree::searchTree(TreeNode *root, const Range &query, const Range &range)
+list<UTMNode> RangeTree::searchTree(TreeNode *root, const Range &query, const Range &range)
 {
     if (root->type == LEAF)
     {
@@ -81,7 +81,7 @@ list<Point> RangeTree::searchTree(TreeNode *root, const Range &query, const Rang
     double line = root->line();
     TreeNode *left = root->left;
     TreeNode *right = root->right;
-    list<Point> result;
+    list<UTMNode> result;
 
     Range leftRange = vertical ? range.left(line) : range.below(line); // if current node is vertical split, left child is what's to the left of line
     Range rightRange = vertical ? range.right(line) : range.above(line); // if current node is a horizontal vertical split, left child is what's to below the line
@@ -101,7 +101,7 @@ list<Point> RangeTree::searchTree(TreeNode *root, const Range &query, const Rang
 }
 
 
-std::list<Point> RangeTree::points(TreeNode *root)
+std::list<UTMNode> RangeTree::points(TreeNode *root)
 {
     if (root->type == LEAF)
         return {root->point};
@@ -112,7 +112,7 @@ std::list<Point> RangeTree::points(TreeNode *root)
 
 
 
-list<Point> RangeTree::search(const Point &q, double w, double h)
+list<UTMNode> RangeTree::search(const UTMNode &q, double w, double h)
 {
     assert(w > 0 && h > 0);
     return searchTree(m_root,

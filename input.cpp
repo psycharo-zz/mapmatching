@@ -18,7 +18,7 @@ void Input::load(const char *fileName)
     if (!ifinput.is_open())
         throw GraphException("can't open input file");
 
-    Node node(0, 0);
+    WGS84Node node(0, 0);
     std::string s;
     while (getline(ifinput, s))
     {

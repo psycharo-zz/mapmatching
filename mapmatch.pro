@@ -19,10 +19,11 @@ HEADERS += \
     learning.h \
     geometry.h \
     rangetree.h \
-    util.h
+    util.h \
+    spatial.h
 
 
-
+LIBS += -lspatialindex
 
 QMAKE_CXXFLAGS += -std=c++0x
 

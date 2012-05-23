@@ -10,7 +10,10 @@ Q_OBJECT
 private slots:
 
     //
-    void distance();
+    void distanceWGS84();
+
+    //
+    void distanceUTM();
 
 };
 

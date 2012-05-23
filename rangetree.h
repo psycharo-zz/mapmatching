@@ -10,6 +10,11 @@
 #include "graph.h"
 
 
+using namespace mmatch;
+
+
+namespace mmatch {
+
 
 class RangeTree
 {
@@ -25,7 +30,7 @@ private:
     class TreeNode
     {
     public:
-        TreeNode(const Point &p):
+        TreeNode(const UTMNode &p):
             left(NULL),
             right(NULL),
             point(p),
@@ -48,7 +53,7 @@ private:
         TreeNode *right;
 
         // TODO: two types of nodes?
-        Point point;
+        UTMNode point;
 
         NodeType type;
     };
@@ -56,7 +61,7 @@ private:
     TreeNode *m_root;
 
     // recursive method for constructing the tree
-    RangeTree::TreeNode *build(std::vector<Point>::iterator start, std::vector<Point>::iterator end, size_t depth);
+    RangeTree::TreeNode *build(std::vector<UTMNode>::iterator start, std::vector<UTMNode>::iterator end, size_t depth);
 
     class Range
     {
@@ -73,7 +78,7 @@ private:
             return x >= leftX && x <= rightX && y >= bottomY && y <= topY;
         }
 
-        bool contains(const Point &q) const
+        bool contains(const UTMNode &q) const
         {
             return q.x >= leftX && q.x <= rightX && q.y >= bottomY && q.y <= topY;
         }
@@ -103,20 +108,23 @@ private:
 
 
     // recursive method for search the tree
-    std::list<Point> searchTree(TreeNode *root, const Range &query, const Range &range);
+    std::list<UTMNode> searchTree(TreeNode *root, const Range &query, const Range &range);
 
     // get all points from the tree
-    std::list<Point> points(TreeNode *root);
+    std::list<UTMNode> points(TreeNode *root);
 
 public:
-    RangeTree(const std::vector<Point> &points);
+    RangeTree(const std::vector<UTMNode> &points);
 
-    std::list<Point> search(const Point &q, double w, double h);
+    std::list<UTMNode> search(const UTMNode &q, double w, double h);
 
 //    Point nn();
 
 
 
 };
+
+
+} // namespace mmatch
 
 #endif // RANGETREE_H

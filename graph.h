@@ -12,28 +12,7 @@
 using namespace mmatch;
 
 
-static const char DELIM = '^';
-
-
-class Point
-{
-public:
-
-    Point():
-        x(0),y(0)
-    {}
-
-    Point(double _x, double _y):
-        x(_x),y(_y)
-    {}
-    double x;
-    double y;
-};
-
-
-
-
-// TODO: int32?
+namespace mmatch {
 
 class Edge
 {
@@ -51,7 +30,7 @@ public:
     char name[MAX_NAME_LENGTH];
     char type[MAX_NAME_LENGTH];
 
-    std::vector<Node> geometry;
+    std::vector<UTMNode> geometry;
 
     //! fill geometry data from the given string
     void fillGeometry(const std::string &s);
@@ -65,7 +44,7 @@ public:
 class RoadGraph
 {
 private:
-    std::vector<Node> m_nodes;
+    std::vector<UTMNode> m_nodes;
     std::vector<std::vector<const Edge*> > m_edges;
     std::vector<const Edge*> m_edgeIndex;
 
@@ -87,7 +66,7 @@ public:
 
 
     // data accessors
-    inline const std::vector<Node> &nodes() const { return m_nodes; }
+    inline const std::vector<UTMNode> &nodes() const { return m_nodes; }
     inline const std::vector<std::vector<const Edge*> > &edges() const { return m_edges; }
     inline const std::vector<const Edge*> &index() const { return m_edgeIndex; }
 
@@ -99,7 +78,7 @@ public:
 
 
 
-
+} // namespace mmatch
 
 
 

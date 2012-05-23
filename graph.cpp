@@ -38,18 +38,18 @@ void Edge::fillGeometry(const string &s)
     posR = s.find(DELIM, posL);
     length = atof(s.substr(posL, posR-posL).c_str());
 
-    Node node;
+    double lat, lon;
     while (posR != string::npos)
     {
         posL = posR+1;
         posR = s.find(DELIM, posL);
-        node.lat = atof(s.substr(posL, posR-posL).c_str());
+        lat = atof(s.substr(posL, posR-posL).c_str());
 
         posL = posR+1;
         posR = s.find(DELIM, posL);
-        node.lon = atof(s.substr(posL, posR-posL).c_str());
+        lon = atof(s.substr(posL, posR-posL).c_str());
 
-        geometry.push_back(node);
+        geometry.push_back(mmatch::toUTM(lat, lon));
     }
 }
 
@@ -68,11 +68,12 @@ void RoadGraph::load(const char *fileNodes, const char *fileEdges, const char *f
     if (!ifnodes.is_open())
         throw GraphException("can't open node data");
 
-    Node node;
+    UTMNode node;
+    double lat, lon;
     int id;
-    while (ifnodes >> id >> node.lat >> node.lon)
+    while (ifnodes >> id >> lat >> lon)
     {
-        m_nodes.push_back(node);
+        m_nodes.push_back(mmatch::toUTM(lat, lon));
         ifnodes.ignore(numeric_limits<streamsize>::max(), '\n');
     }
     ifnodes.close();
@@ -124,7 +125,7 @@ void RoadGraph::load(const char *inputFile)
     input.read((char *)&size, sizeof(size_t));
     m_nodes.resize(size);
     m_edges.resize(size);
-    input.read((char *)&m_nodes.front(), size * sizeof(Node));
+    input.read((char *)&m_nodes.front(), size * sizeof(UTMNode));
 
     input.read((char *)&size, sizeof(size_t));
     m_edgeIndex.resize(size);
@@ -135,7 +136,7 @@ void RoadGraph::load(const char *inputFile)
         input.read((char *)&e->id, (sizeof(int)<<2) + sizeof(double) + (Edge::MAX_NAME_LENGTH<<1));
         input.read((char *)&size, sizeof(size_t));
         e->geometry.resize(size);
-        input.read((char *)&e->geometry.front(), size * sizeof(Node));
+        input.read((char *)&e->geometry.front(), size * sizeof(UTMNode));
 
         m_edges[e->from].push_back(e);
         m_edgeIndex[i] = e;
@@ -153,7 +154,7 @@ void RoadGraph::save(const char *dst)
 
     size_t size = m_nodes.size();
     output.write((const char *)&size, sizeof(size_t));
-    output.write((const char *)&m_nodes.front(), size * sizeof(Node));
+    output.write((const char *)&m_nodes.front(), size * sizeof(UTMNode));
 
     size = m_edgeIndex.size();
     output.write((const char *)&size, sizeof(size_t));
@@ -162,7 +163,7 @@ void RoadGraph::save(const char *dst)
         output.write((const char *)&e->id, (sizeof(int)<<2) + sizeof(double) + (Edge::MAX_NAME_LENGTH<<1));
         size = e->geometry.size();
         output.write((const char *)&size, sizeof(size_t));
-        output.write((const char *)&e->geometry.front(), size * sizeof(Node));
+        output.write((const char *)&e->geometry.front(), size * sizeof(UTMNode));
     }
 }
 

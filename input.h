@@ -15,9 +15,9 @@ public:
     Input() {}
     void load(const char *fileName);
 
-    inline const std::vector<Node> &nodes() const { return m_nodes;}
+    inline const std::vector<WGS84Node> &nodes() const { return m_nodes;}
 private:
-    std::vector<Node> m_nodes;
+    std::vector<WGS84Node> m_nodes;
 };
 
 

@@ -22,4 +22,9 @@ private:
 };
 
 
+
+
+static const char DELIM = '^';
+
+
 #endif // UTIL_H
