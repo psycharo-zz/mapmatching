@@ -22,9 +22,30 @@ double angleMeasure(const UTMNode &p1, const UTMNode &p2, const UTMNode &c1, con
     return v1 * v2 / (v1.length() * v2.length());
 }
 
-double distanceMeasure(const UTMNode &p, const UTMNode &cndta, const UTMNode &cndtb)
+double distanceMeasure(const UTMNode &p, const UTMNode &cndt1, const UTMNode &cndt2)
 {
-    return distance(p, cndta, cndtb);
+    return distance(p, cndt1, cndt2);
+}
+
+
+double distanceMeasureMin(const UTMNode &p, const vector<UTMNode> &geometry)
+{
+    double minMeasure = DBL_MAX;
+    for (auto it = geometry.begin()+1; it != geometry.end(); ++it)
+    {
+        double currMeasure = mmatch::distance(p, *(it-1), *it);
+        if (currMeasure < minMeasure)
+            minMeasure = currMeasure;
+    }
+    return minMeasure;
+}
+
+double distanceMeasureAvg(const UTMNode &p, const vector<UTMNode> &geometry)
+{
+    double avgMeasure = 0.0;
+    for (auto it = geometry.begin()+1; it != geometry.end(); ++it)
+        avgMeasure += mmatch::distance(p, *(it-1), *it);
+    return avgMeasure / (geometry.size()-1);
 }
 
 
@@ -90,37 +111,29 @@ Output mmatch::match(const RoadGraph &graph, ISpatialIndex *tree, const Input &i
 
 
 
+
+
     // now matching all the subsequent points
     for (size_t i = 1; i < input.nodes().size(); ++i)
     {
         int from = lastMatchedEdge->from;
         int to = lastMatchedEdge->to;
 
-        const UTMNode &p1 = graph.nodes().at(from);
-        const UTMNode &p2 = graph.nodes().at(to);
+        double minMeasure = DIST_WEIGHT * distanceMeasureMin(input[i], lastMatchedEdge->geometry); //                            ANGLE_WEIGHT * angleMeasure(input[i-1], input[i], p1, p2);
 
-        double minMeasure = DIST_WEIGHT * distanceMeasure(input[i], p1, p2); //                            ANGLE_WEIGHT * angleMeasure(input[i-1], input[i], p1, p2);
-
-        const Edge *matchedEdge = lastMatchedEdge;
+//        const Edge *matchedEdge = lastMatchedEdge;
 
         for (const Edge *edge : graph.outgoing(to))
         {
-            // TODO: check with all the subedges of the edge
-            const UTMNode &c1 = graph.nodes().at(to);
-            const UTMNode &c2 = graph.nodes().at(edge->to);
+            double currMeasure = DIST_WEIGHT * distanceMeasureMin(input[i], edge->geometry); // + ANGLE_WEIGHT * angleMeasure(input[i-1], input[i], c1, c2);
 
-            double currMeasure = DIST_WEIGHT * distanceMeasure(input[i], c1, c2); // + ANGLE_WEIGHT * angleMeasure(input[i-1], input[i], c1, c2);
-
-            if (currMeasure < minMeasure)
+            if (currMeasure <= minMeasure)
             {
                 minMeasure = currMeasure;
-                matchedEdge = edge;
+                lastMatchedEdge = edge;
                 ceid = edge->id;
             }
-
         }
-
-        lastMatchedEdge = matchedEdge;
 
         // DEBUG
         cout << i << " " << ceid << " " << minMeasure << endl;

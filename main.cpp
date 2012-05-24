@@ -71,8 +71,7 @@ int main()
 
         Output output = mmatch::match(graph, tree.get(), input);
 
-        cout << mmatch::distance(47.2964243, -122.2462307, 47.2964243, -122.2462307) << endl;
-        cout << mmatch::distance(47.2964243, -122.2462307, 47.2964248, -122.2460123) << endl;
+
     }
 
     return 0;

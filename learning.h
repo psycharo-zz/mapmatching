@@ -16,6 +16,9 @@ namespace mmatch {
 static const double ANGLE_WEIGHT = 0.5;
 static const double DIST_WEIGHT = 0.5;
 
+// maximum error in distance
+static const double MAX_ERROR = 150;
+
 
 
 // maxError
