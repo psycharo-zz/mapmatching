@@ -3,7 +3,9 @@
 
 
 #include <cmath>
+#include <vector>
 #include <ostream>
+
 
 
 namespace mmatch {
@@ -59,7 +61,7 @@ public:
 
     UTMNode operator+(const UTMNode &other) const
     {
-        return UTMNode(x + other.x, y - other.y);
+        return UTMNode(x + other.x, y + other.y);
     }
 
     UTMNode operator-(const UTMNode &other) const
@@ -88,6 +90,8 @@ public:
     }
 
 };
+
+
 
 
 typedef std::pair<UTMNode, UTMNode> UTMPair;
@@ -297,6 +301,52 @@ inline double distance(const UTMNode &p,
         return (p - b).length();
 
     return (a + (b - a) * t - p).length();
+}
+
+
+
+
+/*! intersect circle with line segment
+ * \return true if there are any intersections
+ * \param result place to put resulting points
+ */
+inline std::vector<double> line_circle_distance(double x1, double y1, double x2, double y2,
+                                                double cx, double cy, double rad)
+{
+    double dx = (x2 - x1);
+    double dy = (y2 - y1);
+
+    double a = dx*dx + dy*dy;
+    double b = 2 * (dx*(x1 - cx) + dy*(y1 - cy));
+    double c = cx*cx + cy*cy + x1*x1 + y1*y1 - 2 * (cx*x1 + cy*y1) - rad*rad;
+
+    double det = b*b - 4*a*c;
+
+    std::vector<double> result;
+    if (det < 0)
+        return result;
+
+    // determinant is more or equal to zero, we have two (possibly same solutions)
+
+    result.push_back((-b - sqrt(det)) / (2*a));
+    result.push_back((-b + sqrt(det)) / (2*a));
+    return result;
+}
+
+/*! intersect circle with line segment
+ * \return true if there are any intersections
+ * \param result place to put resulting points
+ */
+inline std::vector<double> line_circle_distance(const UTMNode &a, const UTMNode &b,
+                                                const UTMNode &c, double rad)
+{
+    return line_circle_distance(a.x, a.y, b.x, b.y, c.x, c.y, rad);
+}
+
+
+inline UTMNode param(const UTMNode &a, const UTMNode &b, double t)
+{
+    return a + (b - a) * t;
 }
 
 
