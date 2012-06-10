@@ -16,7 +16,7 @@ const float FILL_FACTOR = 0.7;
 const int32_t PAGE_SIZE = 1024;
 
 //! the default number of nearest neighbors to search for
-const int32_t NN_NUMBER = 5;
+const int32_t NN_NUMBER = 3;
 
 
 // macroses for extracting / setting identifiers
@@ -32,6 +32,26 @@ public:
     MapPoint(const UTMNode &p):
         Point((const double *)&p, 2)
     {}
+
+public:
+    void setMappedInputNodeId(const int id)
+    { mappedInputNodeId = id; }
+
+    void setMaxError(const float max)
+    {   maxError = max; }
+
+    int getMappedInputNodeId() const
+    {   return mappedInputNodeId; }
+
+    int getMaxError() const
+    {   return maxError; }
+
+    bool operator< (const MapPoint& rnode) const
+    {   return maxError < rnode.getMaxError(); }
+private:
+    int mappedInputNodeId;
+    float maxError;
+
 };
 
 
