@@ -112,6 +112,9 @@ void RoadGraph::loadBinary(const char *inputFile)
 {
     ifstream input(inputFile, ios_base::binary);
 
+    if (!input.is_open())
+        throw Exception("RoadGraph::loadBinary(): can't open the file");
+
     size_t size = 0;
 
     m_nodes.clear();

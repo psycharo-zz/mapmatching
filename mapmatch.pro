@@ -10,7 +10,8 @@ SOURCES += main.cpp \
     graph.cpp \
     input.cpp \
     learning.cpp \
-    rangetree.cpp
+    rangetree.cpp \
+    frechet.cpp
 
 
 INCLUDEPATH += /usr/lib/spatialindex
@@ -22,7 +23,8 @@ HEADERS += \
     geometry.h \
     rangetree.h \
     util.h \
-    spatial.h
+    spatial.h \
+    frechet.h
 
 
 LIBS += -lspatialindex

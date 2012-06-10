@@ -66,3 +66,33 @@ void TestGeometry::distanceUTM()
 }
 
 
+#include <iostream>
+
+using namespace std;
+
+
+
+
+void TestGeometry::distanceCircle()
+{
+    double error = 1e-5;
+
+    UTMNode a(-1, 1);
+    UTMNode b(1, 1);
+    UTMNode c(0, 0);
+    double rad = 1;
+
+    auto result = line_circle_distance(a, b, c, rad);
+
+    QVERIFY(fabs(mmatch::distance(param(a, b, result[0]), UTMNode(0, 1))) < error && result.size() == 2);
+
+    // TODO: MORE TESTS
+    a = UTMNode(-1, -1);
+    b = UTMNode(1, 1);
+    c = UTMNode(0, 0);
+    result = line_circle_distance(a, b, c, rad);
+
+    QVERIFY(fabs(mmatch::distance(param(a, b, result[0]), UTMNode(-sqrt(2)/2, -sqrt(2)/2))) < error && result.size() == 2);
+    QVERIFY(fabs(mmatch::distance(param(a, b, result[1]), UTMNode(sqrt(2)/2, sqrt(2)/2))) < error && result.size() == 2);
+
+}

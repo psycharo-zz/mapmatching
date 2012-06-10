@@ -15,6 +15,9 @@ private slots:
     //
     void distanceUTM();
 
+    //
+    void distanceCircle();
+
 };
 
 DECLARE_TEST(TestGeometry)

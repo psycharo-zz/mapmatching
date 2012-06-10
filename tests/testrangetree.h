@@ -19,6 +19,6 @@ private slots:
 };
 
 
-DECLARE_TEST(TestRangeTree)
+//DECLARE_TEST(TestRangeTree)
 
 #endif // TESTRANGETREE_H
