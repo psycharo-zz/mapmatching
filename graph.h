@@ -39,6 +39,9 @@ public:
     //! fill geometry data from the given string
     void fillGeometry(const std::string &s);
 
+    //! fill geometry, metric data
+    void fillUTMGeometry(const std::string &s);
+
     // bounding box???
 };
 
@@ -63,6 +66,13 @@ public:
 
     //! load all the data from files
     void load(const char *fileNodes, const char *fileEdges, const char *fileGeometry);
+
+    //! load all the data from files, metric coords
+    void loadUTM(const char *fileNodes, const char *fileEdges, const char *fileGeometry);
+
+
+    //! load everything from provided data
+    void fromData(const std::vector<UTMNode> &, const std::vector<Edge> &);
 
     //! load all from binary file
     void loadBinary(const char *outputFile);

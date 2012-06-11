@@ -54,12 +54,57 @@ void Edge::fillGeometry(const string &s)
 }
 
 
+void Edge::fillUTMGeometry(const std::string &s)
+{
+    geometry.clear();
+
+    size_t posL = 0,
+           posR = 0;
+
+    // position of the first ^
+    posR = s.find(DELIM, posL);
+    // 0..posL - id
+
+    posL = posR+1;
+    posR = s.find(DELIM, posL);
+    s.copy(name, posR-posL, posL);
+//    name = s.substr(posL, posR-posL);
+
+    posL = posR+1;
+    posR = s.find(DELIM, posL);
+    s.copy(type, posR-posL, posL);
+//    type = s.substr(posL, posR-posL);
+
+    posL = posR+1;
+    posR = s.find(DELIM, posL);
+    length = atof(s.substr(posL, posR-posL).c_str());
+
+    double lat, lon;
+    while (posR != string::npos)
+    {
+        posL = posR+1;
+        posR = s.find(DELIM, posL);
+        lat = atof(s.substr(posL, posR-posL).c_str());
+
+        posL = posR+1;
+        posR = s.find(DELIM, posL);
+        lon = atof(s.substr(posL, posR-posL).c_str());
+
+        geometry.push_back(UTMNode(lat, lon));
+    }
+}
+
+
+
 
 RoadGraph::~RoadGraph()
 {
     for (const Edge *edge: m_edgeIndex)
         delete edge;
 }
+
+
+
 
 void RoadGraph::load(const char *fileNodes, const char *fileEdges, const char *fileGeometry)
 {
@@ -105,6 +150,54 @@ void RoadGraph::load(const char *fileNodes, const char *fileEdges, const char *f
     ifedges.close();
     ifgeom.close();
 }
+
+
+void RoadGraph::loadUTM(const char *fileNodes, const char *fileEdges, const char *fileGeometry)
+{
+    ifstream ifnodes(fileNodes);
+
+    if (!ifnodes.is_open())
+        throw Exception("can't open node data");
+
+    double lat, lon;
+    int id;
+    while (ifnodes >> id >> lat >> lon)
+    {
+        m_nodes.push_back(UTMNode(lat, lon));
+        ifnodes.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    ifnodes.close();
+
+
+    ifstream ifedges(fileEdges);
+    ifstream ifgeom(fileGeometry);
+
+    if (!ifedges.is_open() || !ifgeom.is_open())
+        throw Exception("can't open edge data");
+
+    m_edges.resize(m_nodes.size());
+
+    string geomStr;
+    Edge edge;
+    while (ifedges >> edge.id >> edge.from >> edge.to >> edge.cost &&
+           getline(ifgeom, geomStr))
+    {
+        Edge *e = new Edge(edge);
+        e->fillUTMGeometry(geomStr);
+
+        // adding to adjacency list
+        m_edges[e->from].push_back(e);
+
+        // adding pointer to edge index
+        // NOTE!!!: supposing that id read corresponds to the str number FIXME?
+        m_edgeIndex.push_back(e);
+        ifedges.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    ifedges.close();
+    ifgeom.close();
+}
+
+
 
 
 

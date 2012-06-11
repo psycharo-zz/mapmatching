@@ -14,13 +14,23 @@ using namespace std;
 using namespace mmatch;
 
 
-double angleMeasure(const UTMNode &p1, const UTMNode &p2, const UTMNode &c1, const UTMNode &c2)
+double angleMeasure(const UTMNode &p1, const UTMNode &p2, const vector<UTMNode> &geometry)
 {
     UTMNode v1 = p2 - p1;
-    UTMNode v2 = c2 - c1;
-    // cosine
-    return v1 * v2 / (v1.length() * v2.length());
+
+    double minMeasure = 1.0;
+    for (auto it = geometry.begin()+1; it != geometry.end(); ++it)
+    {
+        UTMNode v2 = *it - *(it-1);
+        // cosine
+        double currMeasure = v1 * v2 / (v1.length() * v2.length());
+
+        if (currMeasure < minMeasure)
+            minMeasure = currMeasure;
+    }
+    return minMeasure;
 }
+
 
 double distanceMeasure(const UTMNode &p, const UTMNode &cndt1, const UTMNode &cndt2)
 {
@@ -28,7 +38,14 @@ double distanceMeasure(const UTMNode &p, const UTMNode &cndt1, const UTMNode &cn
 }
 
 
-double distanceMeasureMin(const UTMNode &p, const vector<UTMNode> &geometry)
+double normalizedMeasure(double d)
+{
+    double result = (MAX_ERROR - d);
+    return result / MAX_ERROR;
+}
+
+
+double distanceMin(const UTMNode &p, const vector<UTMNode> &geometry)
 {
     double minMeasure = DBL_MAX;
     for (auto it = geometry.begin()+1; it != geometry.end(); ++it)
@@ -109,23 +126,16 @@ Output mmatch::match(const RoadGraph &graph, ISpatialIndex *tree, const Input &i
     // first one matched
     out.setEstimation(0, ceid, 1.0);
 
-
-
-
-
     // now matching all the subsequent points
     for (size_t i = 1; i < input.nodes().size(); ++i)
     {
-        int from = lastMatchedEdge->from;
         int to = lastMatchedEdge->to;
 
-        double minMeasure = DIST_WEIGHT * distanceMeasureMin(input[i], lastMatchedEdge->geometry); //                            ANGLE_WEIGHT * angleMeasure(input[i-1], input[i], p1, p2);
-
-//        const Edge *matchedEdge = lastMatchedEdge;
+        double minMeasure = distanceMin(input[i], lastMatchedEdge->geometry);
 
         for (const Edge *edge : graph.outgoing(to))
         {
-            double currMeasure = DIST_WEIGHT * distanceMeasureMin(input[i], edge->geometry); // + ANGLE_WEIGHT * angleMeasure(input[i-1], input[i], c1, c2);
+            double currMeasure = distanceMin(input[i], edge->geometry);
 
             if (currMeasure <= minMeasure)
             {
@@ -140,11 +150,13 @@ Output mmatch::match(const RoadGraph &graph, ISpatialIndex *tree, const Input &i
 
         out.setEstimation(i, ceid, 1.0);
     }
-
-
-
     return out;
 }
+
+
+
+
+
 
 /*
 #include "geometry.h"

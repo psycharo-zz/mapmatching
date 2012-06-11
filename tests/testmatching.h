@@ -12,7 +12,7 @@ private slots:
 
 
 
-//DECLARE_TEST(TestMatching);
+DECLARE_TEST(TestMatching);
 
 
 #endif // TESTMATCHING_H

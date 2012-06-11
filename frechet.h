@@ -4,7 +4,15 @@
 #include <cstdlib>
 #include <vector>
 #include <map>
+#include <cassert>
 #include <geometry.h>
+
+
+#include <input.h>
+#include <spatial.h>
+
+
+
 
 using namespace std;
 
@@ -66,6 +74,7 @@ inline UTMNode param(const std::vector<UTMNode> &curve, size_t i, double t)
 }
 
 
+
 inline std::ostream &operator<<(std::ostream &os, const IntervalPos &i)
 {
     os << "(" << i.cell << "," << i.param << ")";
@@ -75,6 +84,13 @@ inline std::ostream &operator<<(std::ostream &os, const Interval &i)
 {
     os << i.left << " : " << i.right;
 }
+
+
+
+
+//! frechet-based algorithm
+Output match_frechet(const RoadGraph &graph, ISpatialIndex *index, const Input &input);
+
 
 
 } // namespace mmatch

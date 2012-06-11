@@ -15,9 +15,11 @@ namespace mmatch {
 class Input
 {
 public:
-    Input(const char *fileName);
+    Input(const char *fileName, bool utm = false);
 
     void load(const char *fileName);
+
+    void loadUTM(const char *fileName);
 
     inline const UTMNode& operator[](size_t i) const { return m_nodes[i]; }
 

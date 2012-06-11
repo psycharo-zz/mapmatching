@@ -7,9 +7,12 @@
 using namespace std;
 
 
-Input::Input(const char *fileName)
+Input::Input(const char *fileName, bool utm)
 {
-    load(fileName);
+    if (utm)
+        loadUTM(fileName);
+    else
+        load(fileName);
 }
 
 
@@ -38,6 +41,36 @@ void Input::load(const char *fileName)
         m_nodes.push_back(mmatch::toUTM(lat, lon));
     }
 }
+
+
+void Input::loadUTM(const char *fileName)
+{
+    std::ifstream ifinput(fileName);
+
+    if (!ifinput.is_open())
+        throw Exception("can't open input file");
+
+    double lat, lon;
+    std::string s;
+    while (getline(ifinput, s))
+    {
+        size_t posL;
+        size_t posR = s.find(IO_DELIM);
+        // ignoring id
+
+        posL = posR+1;
+        posR = s.find(IO_DELIM, posL);
+        lat = atof(s.substr(posL, posR-posL).c_str());
+
+        posL = posR+1;
+        lon = atof(s.substr(posL, s.length()-posL).c_str());
+
+        m_nodes.push_back(UTMNode(lat, lon));
+    }
+}
+
+
+
 
 
 

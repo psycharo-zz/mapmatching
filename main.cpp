@@ -23,17 +23,11 @@ int main()
     string filePrefix = "alldata";
     id_type indexID = 1;
 
-
-
     RoadGraph graph;
-
     cout << "loading road graph" << endl;
     graph.loadBinary("../data/graph.dat");
 
-
     //graph.load("../data/WA_Nodes.txt", "../data/WA_Edges.txt", "../data/WA_EdgeGeometry.txt");
-
-    //cout << "saving road graph" << endl;
     //graph.saveBinary("../data/graph.dat");
 
     if (!exists(filePrefix + ".dat"))
@@ -64,7 +58,7 @@ int main()
     {
         cout << "loading spatial index" << endl;
 
-        Input input("../data/GisContestTrainingData/input/input_01.txt");
+        Input input("../data/GisContestTrainingData/input/input_03.txt");
 
         auto storage = auto_ptr<IStorageManager>(StorageManager::loadDiskStorageManager(filePrefix));
         auto tree = auto_ptr<ISpatialIndex>(RTree::loadRTree(*storage, indexID));
