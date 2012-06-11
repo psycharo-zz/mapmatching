@@ -14,11 +14,8 @@ using namespace std;
 #include "learning.h"
 
 
-
-
 int main()
 {
-
 
     string filePrefix = "alldata";
     id_type indexID = 1;
@@ -58,13 +55,16 @@ int main()
     {
         cout << "loading spatial index" << endl;
 
-        Input input("../data/GisContestTrainingData/input/input_03.txt");
+        Input input("../data/input/input_02.txt");
 
         auto storage = auto_ptr<IStorageManager>(StorageManager::loadDiskStorageManager(filePrefix));
         auto tree = auto_ptr<ISpatialIndex>(RTree::loadRTree(*storage, indexID));
 
-        Output output = mmatch::match(graph, tree.get(), input);
+        Output output1 = mmatch::match(graph, tree.get(), input);
+        cout << "original: " <<  output1.getMaxError() << endl;
 
+        Output output2 = mmatch::backtracingMatch(graph, tree.get(), input);
+        cout << "with queue: " <<  output2.getMaxError() << endl;
 
     }
 

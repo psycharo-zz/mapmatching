@@ -57,11 +57,13 @@ public:
     };
 
     Output(size_t size = 0):
-        m_estmns(size)
+        m_estmns(size),
+        maxError(0.0)
     {}
 
     Output(const Input &input):
-        m_estmns(input.nodes().size())
+        m_estmns(input.nodes().size()),
+        maxError(0.0)
     {}
 
 
@@ -79,11 +81,15 @@ public:
 
     //! data accessor
     inline const std::vector<Estimate> &estimates() const { return m_estmns; }
+    inline float& getMaxError() { return maxError; } // TODO : set it more private
 
+    //! result validator, i.e. check if all matched edges are connected
+    bool validate(const RoadGraph& );
 private:
+    float maxError;
     std::vector<Estimate> m_estmns;
 
-};
+}; // end of class Output
 
 
 class Evaluation

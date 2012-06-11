@@ -116,3 +116,16 @@ void Output::save(const char *fileName) const
         ofoutput << i << IO_DELIM << m_estmns[i].edge << IO_DELIM << m_estmns[i].confidence << '\n';
 }
 
+//bool Output::validate(const RoadGraph graph)
+//{
+//    for (i=0; i<this->estimates().size()-2; i++)
+//    {
+//        endpoint = graph.index().at(this->estimates().at(i).edge);
+//        startpoint = this->estimates().at(i+1).edge;
+//        if (this->estimates().at(i))
+//    }
+
+//    return true;
+
+//}
+
