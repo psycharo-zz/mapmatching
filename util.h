@@ -42,6 +42,43 @@ inline bool exists(const std::string &filename)
 }
 
 
+//! identifying shared point, does not belong to any edge
+static const int32_t EID_COMMON = -1;
+
+
+struct geom_id
+{
+    int32_t eid;
+    int32_t gid;
+
+    geom_id(int32_t _eid, int32_t _gid):
+        eid(_eid),
+        gid(_gid)
+    {}
+
+    bool operator<(const geom_id &other) const
+    {
+        return (eid == other.eid) ? gid < other.gid : eid < other.eid;
+    }
+
+    bool is_internal() const
+    {
+        return eid != EID_COMMON;
+    }
+
+};
+
+
+inline std::ostream &operator<<(std::ostream &os, const geom_id &id)
+{
+    if (id.is_internal())
+        os << "edge:" << id.eid << " geom:" << id.gid;
+    else
+        os << "node:" << id.gid;
+}
+
+
+
 }
 
 

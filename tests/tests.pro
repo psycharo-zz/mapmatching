@@ -29,7 +29,6 @@ HEADERS += ./test*.h \
                 ../util.h \
                 ../spatial.h
 
-DEPENDPATH += ./*.h
 
 
 LIBS += -lspatialindex

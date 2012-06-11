@@ -7,6 +7,7 @@
 
 #include "geometry.h"
 #include "util.h"
+#include "spatial.h"
 
 
 using namespace mmatch;
@@ -42,6 +43,17 @@ public:
     //! fill geometry, metric data
     void fillUTMGeometry(const std::string &s);
 
+    //! generate the correct id for the part of the edge
+    inline geom_id geometry_id(int32_t gid) const
+    {
+        if (gid == 0)
+            return geom_id(EID_COMMON, from);
+        else if (gid == geometry.size()-1)
+            return geom_id(EID_COMMON, to);
+        return geom_id(id, gid);
+    };
+
+
     // bounding box???
 };
 
@@ -70,7 +82,6 @@ public:
     //! load all the data from files, metric coords
     void loadUTM(const char *fileNodes, const char *fileEdges, const char *fileGeometry);
 
-
     //! load everything from provided data
     void fromData(const std::vector<UTMNode> &, const std::vector<Edge> &);
 
@@ -85,8 +96,12 @@ public:
     inline const std::vector<UTMNode> &nodes() const { return m_nodes; }
     inline const std::vector<std::vector<const Edge*> > &edges() const { return m_edges; }
     inline const std::vector<const Edge*> &index() const { return m_edgeIndex; }
-    inline const UTMNode &getNode(int32_t eid, int32_t gid) const { return m_edgeIndex[eid]->geometry[gid]; }
 
+    //! get GEOMETRICAL node by GEOMETRICAL id
+    inline const UTMNode &node(geom_id id) const { return (id.is_internal()) ? m_edgeIndex[id.eid]->geometry[id.gid] : m_nodes[id.gid]; }
+
+    //! get all all outgoing GEOMETRICAL IDS for a given (eid,gid)
+    std::vector<geom_id> adjacent(geom_id id) const;
 
     //! get all outgoing edges for a given node id
     inline const std::vector<const Edge*> &outgoing(int nodeId) const { return m_edges[nodeId]; }

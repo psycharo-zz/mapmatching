@@ -26,6 +26,7 @@ typedef vector<Interval> Chain;
 typedef Chain::iterator IntervalIt;
 
 
+
 struct IntervalPos
 {
     // the position on the route (k) (number of the cell)

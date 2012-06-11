@@ -263,6 +263,23 @@ void RoadGraph::saveBinary(const char *dst)
 }
 
 
+std::vector<geom_id> RoadGraph::adjacent(geom_id id) const
+{
+    if (id.is_internal())
+    {
+        assert(id.eid != EID_COMMON && id.gid != 0 && (id.gid < m_edgeIndex[id.eid]->geometry.size()-1));
+        return {geom_id(id.eid, id.gid+1)};
+    }
+
+    int32_t node_id = id.gid;
+    vector<geom_id> result;
+    for  (const Edge *edge : m_edges[node_id])
+        result.push_back(edge->geometry_id(1));
+    return result;
+
+}
+
+
 
 
 

@@ -7,7 +7,7 @@ class TestMatching : public QObject
 {
 Q_OBJECT
 private slots:
-    void match_frechet();
+    void matchFrechet();
 };
 
 

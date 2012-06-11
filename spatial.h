@@ -19,7 +19,7 @@ const int32_t PAGE_SIZE = 1024;
 const int32_t NN_NUMBER = 5;
 
 // macroses for extracting / setting identifiers
-#define SHAPE_ID(edgeID, geomID) ((u_int64_t(edgeID) << 32) | geomID)
+#define SHAPE_ID(edgeID, geomID) ((u_int64_t(int32_t(edgeID)) << 32) | geomID)
 #define EDGE_ID(id) (id >> 32)
 #define GEOM_ID(id) (id & 0xffffffff)
 
