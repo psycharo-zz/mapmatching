@@ -6,12 +6,8 @@
 #include <map>
 #include <cassert>
 #include <geometry.h>
-
-
 #include <input.h>
 #include <spatial.h>
-
-
 
 
 using namespace std;
@@ -21,14 +17,11 @@ namespace mmatch
 {
 
 
-
-
 class Interval;
 
 typedef vector<Interval> Chain;
 
 typedef Chain::iterator IntervalIt;
-
 
 
 struct IntervalPos
@@ -45,8 +38,10 @@ struct IntervalPos
     {
         return (cell == other.cell) ? (param > other.param) : (cell > other.cell);
     }
-
 };
+
+
+
 
 struct Interval
 {
@@ -93,10 +88,12 @@ inline std::ostream &operator<<(std::ostream &os, const Interval &i)
 }
 
 
-
-
 //! frechet-based algorithm
 Output match_frechet(const RoadGraph &graph, ISpatialIndex *index, const Input &input);
+
+
+//! weak frechet-based
+Output match_frechet_weak(const RoadGraph &graph, ISpatialIndex *index, const Input &input);
 
 
 

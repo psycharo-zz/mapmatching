@@ -219,10 +219,10 @@ class hash<MatchPair>
 multiset<GeometryEdge> get_candidates(const RoadGraph &graph, const GeometryEdge &curr, const UTMNode &route_point)
 {
     multiset<GeometryEdge> candidates;
-    UTMNode from = graph.node(curr.to);
+    UTMNode from = graph.coord(curr.to);
     for (geom_id adj : graph.adjacent(curr.to))
     {
-        UTMNode to = graph.node(adj);
+        UTMNode to = graph.coord(adj);
         GeometryEdge adj_edge(curr.to, adj, distance(route_point, from, to));
         candidates.insert(adj_edge);
     }
@@ -243,7 +243,7 @@ Output mmatch::backtracing_match(const RoadGraph &graph, ISpatialIndex *tree, co
     tree->nearestNeighborQuery(NN_NUMBER, query, visitor);
 
     // candidate edge id and geom id
-    geom_id curr_id;
+    geom_id curr_id(-1, -1);
 
     multiset<GeometryEdge> source_candidates;
 
@@ -263,7 +263,7 @@ Output mmatch::backtracing_match(const RoadGraph &graph, ISpatialIndex *tree, co
         geom_id to = edge->geometry_id(gidb);
 
         // FIXME
-        double weight = distance(route[0], graph.node(from), graph.node(to));
+        double weight = distance(route[0], graph.coord(from), graph.coord(to));
         source_candidates.insert(GeometryEdge(from, to, weight));
     }
 
@@ -310,7 +310,7 @@ Output mmatch::backtracing_match(const RoadGraph &graph, ISpatialIndex *tree, co
 
                     multiset<GeometryEdge> candidates = get_candidates(graph, curr, route_point);
 
-                    double weight = distance(route_point, graph.node(p.edge.from), graph.node(p.edge.to));
+                    double weight = distance(route_point, graph.coord(p.edge.from), graph.coord(p.edge.to));
 
                     for (const GeometryEdge &c : candidates)
                     {

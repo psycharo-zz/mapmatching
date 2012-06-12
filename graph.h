@@ -98,7 +98,7 @@ public:
     inline const std::vector<const Edge*> &index() const { return m_edgeIndex; }
 
     //! get GEOMETRICAL node by GEOMETRICAL id
-    inline const UTMNode &node(geom_id id) const { return (id.is_internal()) ? m_edgeIndex[id.eid]->geometry[id.gid] : m_nodes[id.gid]; }
+    inline const UTMNode &coord(geom_id id) const { return (id.is_internal()) ? m_edgeIndex[id.eid]->geometry[id.gid] : m_nodes[id.gid]; }
 
     //! get all all outgoing GEOMETRICAL IDS for a given (eid,gid)
     std::vector<geom_id> adjacent(geom_id id) const;

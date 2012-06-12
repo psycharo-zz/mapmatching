@@ -51,7 +51,7 @@ struct geom_id
     int32_t eid;
     int32_t gid;
 
-    geom_id(int32_t _eid = -1, int32_t _gid = -1):
+    geom_id(int32_t _eid, int32_t _gid):
         eid(_eid),
         gid(_gid)
     {}

@@ -89,6 +89,11 @@ public:
         return sqrt(x * x + y * y);
     }
 
+    double length2() const
+    {
+        return x*x + y*y;
+    }
+
 };
 
 
@@ -280,6 +285,13 @@ inline UTMNode toUTM(const WGS84Node &p)
 inline double distance(const UTMNode &a, const UTMNode &b)
 {
     return (b - a).length();
+}
+
+
+//! squared distance between two UTM points
+inline double distance2(const UTMNode &a, const UTMNode &b)
+{
+    return (b - a).length2();
 }
 
 

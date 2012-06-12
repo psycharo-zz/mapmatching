@@ -15,16 +15,21 @@ using namespace std;
 #include "learning.h"
 
 
-void construct(string file_prefix, id_type index_id)
+unique_ptr<ISpatialIndex> load(string file_prefix, int index_id)
+{
+    auto storage = unique_ptr<IStorageManager>(StorageManager::loadDiskStorageManager(file_prefix));
+    auto tree = unique_ptr<ISpatialIndex>(RTree::loadRTree(*storage, index_id));
+
+    return tree;
+}
+
+shared_ptr<ISpatialIndex> construct(id_type index_id)
 {
     RoadGraph graph;
     graph.loadUTM("../data/test/nodes.txt", "../data/test/edges.txt", "../data/test/edgegeometry.txt");
 
-    auto storage = unique_ptr<IStorageManager>(StorageManager::createNewMemoryStorageManager());
-    auto tree = unique_ptr<ISpatialIndex>(RTree::createNewRTree(*storage, FILL_FACTOR, CAPACITY, CAPACITY, 2, RTree::RV_RSTAR, index_id));
-
-    cout << "index id: " << index_id << endl;
-
+    auto storage = StorageManager::createNewMemoryStorageManager();
+    auto tree = shared_ptr<ISpatialIndex>(RTree::createNewRTree(*storage, FILL_FACTOR, CAPACITY, CAPACITY, 2, RTree::RV_RSTAR, index_id));
     int64_t edgeCount = 0;
     for (const Edge *e : graph.index())
     {
@@ -37,7 +42,7 @@ void construct(string file_prefix, id_type index_id)
             }
             ++edgeCount;
     }
-
+    return tree;
 }
 
 int main()
@@ -47,18 +52,22 @@ int main()
 
     RoadGraph graph;
 
-    string dataset = "03";
+    auto tree = construct(index_id);
 
-    graph.loadBinary("../data/graph.dat");
-    Input input("../data/input/input_" + dataset + ".txt");
+    Input input("../data/test/input.txt", true);
+    graph.loadUTM("../data/test/nodes.txt", "../data/test/edges.txt", "../data/test/edgegeometry.txt");
+    Output output = mmatch::match_frechet_weak(graph, tree.get(), input);
 
-    auto storage = unique_ptr<IStorageManager>(StorageManager::loadDiskStorageManager(file_prefix));
-    auto tree = unique_ptr<ISpatialIndex>(RTree::loadRTree(*storage, index_id));
+//    string dataset = "03";
+//    graph.loadBinary("../data/graph.dat");
+//    Input input("../data/input/input_" + dataset + ".txt");
+//    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
+//    Output about("../data/output/output_" + dataset + ".txt");
+//    cout << output.evaluate(about) << endl;
 
-    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
-    Output about("../data/output/output_" + dataset + ".txt");
+//    Output output = mmatch::match_frechet_weak(graph, 0, input);
 
-    cout << output.evaluate(about) << endl;
+
 
 
     return 0;
