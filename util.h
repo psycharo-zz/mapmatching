@@ -51,17 +51,22 @@ struct geom_id
     int32_t eid;
     int32_t gid;
 
-    geom_id(int32_t _eid, int32_t _gid):
+    geom_id(int32_t _eid = -1, int32_t _gid = -1):
         eid(_eid),
         gid(_gid)
     {}
 
-    bool operator<(const geom_id &other) const
+    inline bool operator<(const geom_id &other) const
     {
         return (eid == other.eid) ? gid < other.gid : eid < other.eid;
     }
 
-    bool is_internal() const
+    inline bool operator==(const geom_id &other) const
+    {
+        return (eid == other.eid) && (gid == other.gid);
+    }
+
+    inline bool is_internal() const
     {
         return eid != EID_COMMON;
     }
@@ -75,6 +80,7 @@ inline std::ostream &operator<<(std::ostream &os, const geom_id &id)
         os << "edge:" << id.eid << " geom:" << id.gid;
     else
         os << "node:" << id.gid;
+    return os;
 }
 
 

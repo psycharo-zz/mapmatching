@@ -7,7 +7,7 @@
 using namespace std;
 
 
-Input::Input(const char *fileName, bool utm)
+Input::Input(const std::string &fileName, bool utm)
 {
     if (utm)
         loadUTM(fileName);
@@ -16,7 +16,7 @@ Input::Input(const char *fileName, bool utm)
 }
 
 
-void Input::load(const char *fileName)
+void Input::load(const std::string &fileName)
 {
     std::ifstream ifinput(fileName);
 
@@ -43,7 +43,7 @@ void Input::load(const char *fileName)
 }
 
 
-void Input::loadUTM(const char *fileName)
+void Input::loadUTM(const std::string &fileName)
 {
     std::ifstream ifinput(fileName);
 
@@ -75,7 +75,7 @@ void Input::loadUTM(const char *fileName)
 
 
 
-void Output::load(const char *fileName)
+void Output::load(const std::string &fileName)
 {
     std::ifstream ifoutput(fileName);
 
@@ -103,7 +103,7 @@ void Output::load(const char *fileName)
 }
 
 
-void Output::save(const char *fileName) const
+void Output::save(const std::string &fileName) const
 {
     std::ofstream ofoutput(fileName);
 
@@ -116,16 +116,17 @@ void Output::save(const char *fileName) const
         ofoutput << i << IO_DELIM << m_estmns[i].edge << IO_DELIM << m_estmns[i].confidence << '\n';
 }
 
-//bool Output::validate(const RoadGraph graph)
-//{
-//    for (i=0; i<this->estimates().size()-2; i++)
-//    {
-//        endpoint = graph.index().at(this->estimates().at(i).edge);
-//        startpoint = this->estimates().at(i+1).edge;
-//        if (this->estimates().at(i))
-//    }
 
-//    return true;
 
-//}
-
+double Output::evaluate(const Output &according) const
+{
+    if (estimates().size() != according.estimates().size())
+        throw Exception("sizes must be equal to evaluate");
+    double result = 0;
+    for (size_t i = 0; i < estimates().size(); ++i)
+    {
+        if (edge(i) == according.edge(i))
+            result += confidence(i);
+    }
+    return result / estimates().size();
+}

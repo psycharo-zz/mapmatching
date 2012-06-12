@@ -19,6 +19,10 @@ using namespace std;
 
 namespace mmatch
 {
+
+
+
+
 class Interval;
 
 typedef vector<Interval> Chain;
@@ -79,11 +83,13 @@ inline UTMNode param(const std::vector<UTMNode> &curve, size_t i, double t)
 inline std::ostream &operator<<(std::ostream &os, const IntervalPos &i)
 {
     os << "(" << i.cell << "," << i.param << ")";
+    return os;
 }
 
 inline std::ostream &operator<<(std::ostream &os, const Interval &i)
 {
     os << i.left << " : " << i.right;
+    return os;
 }
 
 

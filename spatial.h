@@ -16,7 +16,7 @@ const RTree::RTreeVariant TREE_VARIANT = RTree::RV_RSTAR;
 const float FILL_FACTOR = 0.7;
 const int32_t PAGE_SIZE = 1024;
 
-const int32_t NN_NUMBER = 5;
+const int32_t NN_NUMBER = 10;
 
 // macroses for extracting / setting identifiers
 #define SHAPE_ID(edgeID, geomID) ((u_int64_t(int32_t(edgeID)) << 32) | geomID)

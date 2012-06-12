@@ -15,11 +15,11 @@ namespace mmatch {
 class Input
 {
 public:
-    Input(const char *fileName, bool utm = false);
+    Input(const std::string &fileName, bool utm = false);
 
-    void load(const char *fileName);
+    void load(const std::string &fileName);
 
-    void loadUTM(const char *fileName);
+    void loadUTM(const std::string &fileName);
 
     inline const UTMNode& operator[](size_t i) const { return m_nodes[i]; }
 
@@ -66,12 +66,20 @@ public:
         maxError(0.0)
     {}
 
+    Output(const std::string &fileName)
+    {
+        load(fileName);
+    }
+
 
     //! load output from file
-    void load(const char *fileName);
+    void load(const std::string &fileName);
 
     //! save output to file
-    void save(const char *fileName) const;
+    void save(const std::string &fileName) const;
+
+    //! get measure according to another output
+    double evaluate(const Output &according) const;
 
     //! set estimation value
     inline void setEstimation(int32_t id, int32_t edge, float confidence)
@@ -83,6 +91,11 @@ public:
     inline const std::vector<Estimate> &estimates() const { return m_estmns; }
     inline float& getMaxError() { return maxError; } // TODO : set it more private
 
+    inline int32_t edge(int32_t id) const { return m_estmns[id].edge; }
+    inline float confidence(int32_t id) const { return m_estmns[id].confidence; }
+    //! get size
+    inline size_t size() const { return m_estmns.size(); }
+
     //! result validator, i.e. check if all matched edges are connected
     bool validate(const RoadGraph& );
 private:
@@ -92,15 +105,7 @@ private:
 }; // end of class Output
 
 
-class Evaluation
-{
-public:
-    Evaluation(const Output &outputA, const Output &outputB);
-
-private:
-    // some evaluation results
-    // TODO: to string? which kinds of results
-};
+double evaluate(const Output &a, const Output &b);
 
 
 }

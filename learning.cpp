@@ -3,9 +3,10 @@
 #include "spatial.h"
 
 #include <cfloat>
-#include<queue>
-#include<stack>
-#include<CandidaEdge.h>
+#include <queue>
+#include <stack>
+#include <CandidaEdge.h>
+#include <unordered_set>
 
 
 // DEBUG
@@ -159,221 +160,188 @@ Output mmatch::match(const RoadGraph &graph, ISpatialIndex *tree, const Input &i
 
 
 
-
-
-
-Output mmatch::backtracingMatch(const RoadGraph &graph, ISpatialIndex *tree, const Input &input)
+struct GeometryEdge
 {
-    if (!tree->isIndexValid())
-        throw Exception("spatial index in invalid state");
+    geom_id from;
+    geom_id to;
 
-    if (input.nodes().size() == 0)
-        throw Exception("empty input");
+    double weight;
+
+    GeometryEdge(geom_id _from, geom_id _to, double _weight):
+        from(_from), to(_to), weight(_weight)
+    {}
+
+    bool operator < (const GeometryEdge &other) const
+    {
+        return weight < other.weight;
+    }
 
 
-    // initialize
+
+
+};
+
+
+
+struct MatchPair
+{
+    //! the edge to match
+    GeometryEdge edge;
+
+    //! point being matched
+    size_t point;
+
+    MatchPair(const GeometryEdge &_edge, size_t _point):
+        edge(_edge),point(_point)
+    {}
+
+    bool operator==(const MatchPair &other) const
+    {
+        return (point == other.point) && (edge.from == other.edge.from) && (edge.to == other.edge.to);
+    }
+};
+
+
+namespace std
+{
+template <>
+class hash<MatchPair>
+        {
+        public :
+        size_t operator()(const MatchPair &x) const
+        {
+            return hash<int>()(x.edge.from.eid) ^ hash<int>()(x.edge.to.gid) ^ hash<int>()(x.point);
+        }
+    };
+}
+
+
+multiset<GeometryEdge> get_candidates(const RoadGraph &graph, const GeometryEdge &curr, const UTMNode &route_point)
+{
+    multiset<GeometryEdge> candidates;
+    UTMNode from = graph.node(curr.to);
+    for (geom_id adj : graph.adjacent(curr.to))
+    {
+        UTMNode to = graph.node(adj);
+        GeometryEdge adj_edge(curr.to, adj, distance(route_point, from, to));
+        candidates.insert(adj_edge);
+    }
+    return candidates;
+}
+
+
+Output mmatch::backtracing_match(const RoadGraph &graph, ISpatialIndex *tree, const Input &input, const double max_error)
+{
     Output out(input);
 
-    //**************************************
-    const float maxError = 300;   //
-    stack<priority_queue<CandidateEdge, vector<CandidateEdge>, CompareCandidateEdge>> allcandidates;
+    vector<UTMNode> route = input.nodes();
 
-    //**********************************
-    UTMNode first = input.nodes().at(0);
-
-    MapPoint query(first);
+    MapPoint query(route[0]);
     MapNeighborVisitor visitor;
 
     // initialisation step, searching for several nearest points
     tree->nearestNeighborQuery(NN_NUMBER, query, visitor);
 
-    // we need at least one candidate
-    assert(visitor.neighbors.size() >= 1);
-
-    double minDist = DBL_MAX;
-
     // candidate edge id and geom id
-    int32_t ceid, cgid;
+    geom_id curr_id;
 
-    // the last matched edge
-    const Edge *lastMatchedEdge = NULL;
+    multiset<GeometryEdge> source_candidates;
 
-    // searching for the closest neighbor
-    for (id_type id: visitor.neighbors)
+    for (id_type id : visitor.neighbors)
     {
-        int32_t eid = EDGE_ID(id);
         int32_t gid = GEOM_ID(id);
+        curr_id.eid = EDGE_ID(id);
+        curr_id.gid = gid;
 
-        const Edge *edge = graph.edge(eid);
+        const Edge *edge = graph.edge(curr_id.eid);
+        size_t geom_size = edge->geometry.size();
 
-        int32_t gida = (gid == edge->geometry.size()-1) ? gid-1 : gid;
-        int32_t gidb = (gid == edge->geometry.size()-1) ? gid : gid+1;
+        int32_t gida = (gid == geom_size-1) ? gid-1 : gid;
+        int32_t gidb = (gid == geom_size-1) ? gid : gid+1;
 
-        UTMNode a = edge->geometry.at(gida);
-        UTMNode b = edge->geometry.at(gidb);
+        geom_id from = edge->geometry_id(gida);
+        geom_id to = edge->geometry_id(gidb);
 
-        const double currDist = mmatch::distance(first, a, b);
-
-        if (currDist <= minDist)
-        {
-            ceid = eid;
-            cgid = gid;
-            lastMatchedEdge = edge;
-            minDist = currDist;
-        }
+        // FIXME
+        double weight = distance(route[0], graph.node(from), graph.node(to));
+        source_candidates.insert(GeometryEdge(from, to, weight));
     }
 
-    assert(lastMatchedEdge);
 
-    // first one matched
-    out.setEstimation(0, ceid, 1.0);
+    vector<GeometryEdge> matched_route;
+    bool found = false;
 
-
-    // ****************************************************************************************************
-    // now matching all the subsequent points
-    for (size_t i = 1; i < input.nodes().size(); ++i)
+    for (const GeometryEdge &src : source_candidates)
     {
-        cout << "try to match(" << i << ")\t";
-        priority_queue<CandidateEdge, vector<CandidateEdge>, CompareCandidateEdge> one_level_candidates;
-        int from = lastMatchedEdge->from;
-        int to = lastMatchedEdge->to;
+        if (found)
+            break;
 
-        const UTMNode &p1 = graph.nodes().at(from);
-        const UTMNode &p2 = graph.nodes().at(to);
+        matched_route = {src};
 
-        double minMeasure = DIST_WEIGHT * distanceMeasure(input[i], p1, p2); //ANGLE_WEIGHT * angleMeasure(input[i-1], input[i], p1, p2);
-
-        const Edge *matchedEdge = lastMatchedEdge;
-        ceid = lastMatchedEdge->id;
-
-        for (const Edge *edge : graph.outgoing(to))
+        unordered_set<MatchPair> matched_table;
+        stack<MatchPair> pairs;
+        pairs.push(MatchPair(src, 0));
+        while (!pairs.empty() && !found)
         {
-            // TODO: check with all the subedges of the edge
-            const UTMNode &c1 = graph.nodes().at(to);
-            const UTMNode &c2 = graph.nodes().at(edge->to);
+            MatchPair p = pairs.top();
+            pairs.pop();
+            matched_table.insert(p);
 
-            double currMeasure = DIST_WEIGHT * distanceMeasure(input[i], c1, c2); // + ANGLE_WEIGHT * angleMeasure(input[i-1], input[i], c1, c2);
-
-            if (currMeasure < minMeasure)
+            GeometryEdge curr = p.edge;
+            if (curr.weight < max_error)
             {
-                minMeasure = currMeasure;
-                matchedEdge = edge;
-                ceid = edge->id;
+
+                // FOUND!!!
+                if (p.point == route.size()-1)
+                {
+                    found = true;
+                    matched_route.push_back(curr);
+                }
+                else
+                {
+                    // NOT YET :/
+                    // removing all up until this point
+                    while (matched_route.size() > p.point)
+                        matched_route.pop_back();
+
+                    matched_route.push_back(curr);
+
+                    UTMNode route_point = route[p.point+1];
+
+                    multiset<GeometryEdge> candidates = get_candidates(graph, curr, route_point);
+
+                    double weight = distance(route_point, graph.node(p.edge.from), graph.node(p.edge.to));
+
+                    for (const GeometryEdge &c : candidates)
+                    {
+                        MatchPair cp(c, p.point+1);
+                        if (!matched_table.count(cp))
+                            pairs.push(cp);
+                    }
+                    pairs.push(MatchPair(GeometryEdge(p.edge.from, p.edge.to, weight), p.point+1));
+                }
             }
-
-            if (currMeasure < maxError)
-            {
-                CandidateEdge candidateedge(edge, i, currMeasure);
-                one_level_candidates.push(candidateedge);
-            }
-
         }
-
-        if (ceid != lastMatchedEdge->id)// ceid changed, we have already select one
-            one_level_candidates.pop();
-        allcandidates.push(one_level_candidates);
-
-
-        // determine which edge matches this time
-        if (minMeasure < maxError)
-        {
-            lastMatchedEdge = matchedEdge;
-        }
-        else   // go back
-        {
-            // find the alternatives which are not empty
-            one_level_candidates = allcandidates.top();
-            allcandidates.pop();
-            while (one_level_candidates.empty())
-            {
-                i --; // ueseless
-                one_level_candidates = allcandidates.top();
-                allcandidates.pop();
-
-                if (i<0) throw Exception("index <0 when go back! ");
-            }
-
-            // assign current match to the edge, with least 'distance to the corresponding input node'
-            CandidateEdge ce = one_level_candidates.top();
-            one_level_candidates.pop();
-            lastMatchedEdge = ce.getEdge();
-            minMeasure = ce.getDistToInputNode();
-            ceid = lastMatchedEdge->id;
-            i = ce.getMappedInputNodeId();
-
-            // push this level back
-            allcandidates.push(one_level_candidates);
-        }
-
-
-        cout << "matched: " << i << "-" << ceid << "-" << minMeasure<< "\t|" <<allcandidates.size() <<  endl;
-
-        // DEBUG
-       out.getMaxError() = minMeasure > out.getMaxError() ? minMeasure : out.getMaxError();
-//        cout << i << " " << ceid << " " << minMeasure << endl;
-
-        out.setEstimation(i, ceid, 1.0);
-        cout << "loop ends" << endl;
     }
 
-    cout << "totally ends" << endl;
+    assert(found && matched_route.size() == input.size());
+
+    for (size_t i = 0; i < matched_route.size(); ++i)
+    {
+        GeometryEdge e = matched_route[i];
+        if (e.from.is_internal())
+            out.setEstimation(i, e.from.eid, 1.0);
+        else if (e.to.is_internal())
+            out.setEstimation(i, e.to.eid, 1.0);
+        else
+        {
+            vector<const Edge*> all = graph.outgoing(e.from.gid);
+            const Edge *edge = *find_if(all.begin(), all.end(),
+                                        [&e](const Edge *edge) { return edge->to == e.to.gid; });
+            out.setEstimation(i, edge->id, 1.0);
+        }
+    }
     return out;
 }
 
-/*
-#include "geometry.h"
 
-double maxDistance(const RoadGraph &graph, const Input &input, const Output &output)
-{
-    double result = 0.0;
-
-    for (int i = 0; i < input.nodes().size(); i++)
-    {
-        Node node = input.nodes()[i];
-        Point2D p(node.latitude, node.longitude);
-
-        Output::Estimate estmt = output.estimates()[i];
-        const Edge *edge = graph.edge(estmt.edge);
-
-        Node from(graph.nodes()[edge->from]);
-        Node to(graph.nodes()[edge->to]);
-
-        Segment s(Point2D(from.latitude, from.longitude),
-                  Point2D(to.latitude, to.longitude));
-
-        double dist = CGAL::squared_distance(p, s);
-
-        if (dist > result)
-            result = dist;
-    }
-    return result;
-}
-
-
-
-double avgDistance(const RoadGraph &graph, const Input &input, const Output &output)
-{
-    double result = 0.0;
-
-    for (int i = 0; i < input.nodes().size(); i++)
-    {
-        Node node = input.nodes()[i];
-        Point2D p(node.latitude, node.longitude);
-
-        Output::Estimate estmt = output.estimates()[i];
-        const Edge *edge = graph.edge(estmt.edge);
-
-        Node from(graph.nodes()[edge->from]);
-        Node to(graph.nodes()[edge->to]);
-
-        Segment s(Point2D(from.latitude, from.longitude),
-                  Point2D(to.latitude, to.longitude));
-
-        result += CGAL::squared_distance(p, s);
-
-    }
-    return result / input.nodes().size();
-}
-
-
-*/

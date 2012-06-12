@@ -1,6 +1,8 @@
 TEMPLATE = app
 CONFIG += console
 
+CONFIG += debug
+
 
 CONFIG  += qtestlib
 

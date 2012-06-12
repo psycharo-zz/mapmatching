@@ -9,6 +9,14 @@ using namespace std;
 
 
 
+// all the intervals
+typedef pair<double, double> dblpair_t;
+typedef map<geom_id, vector<dblpair_t> > Diagram;
+
+
+
+
+
 void filter(vector<double> &results)
 {
     if (results.size() == 0)
@@ -46,84 +54,116 @@ void filter(vector<double> &results)
 }
 
 
+// removing almost identical
+vector<UTMNode> filter_input(const Input &input)
+{
+    vector<UTMNode> route = {input.nodes().front()};
+    for (size_t i = 1; i < input.nodes().size(); i++)
+    {
+        if (distance(input.nodes().at(i), route.back()) >= EPS)
+            route.push_back(input.nodes().at(i));
+    }
+    return route;
+}
+
+
 
 Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *index, const Input &input)
 {
     Output result(input);
 
 
-    // DEBUG
-    double error = 15;
+    size_t iteration = 0;
+    cout << "--------------------------" << endl;
+    cout << "input size before filtering: " << input.nodes().size() << endl;
+    auto route = filter_input(input);
+    cout << "input size after filtering: " << route.size() << endl;
+    cout << "--------------------------" << endl;
 
-    // NOTE: THIS ARE GRAPH NODES, while we're using geometrical nodes,
-    // that are indexed by SHAPE_ID(edge_id, geom_id)
-    auto graph_nodes = graph.nodes();
-    auto route = input.nodes();
+    cout << "starting horizontal diagram builder" << endl;
+
+    // DEBUG
+    double error = 10;
 
     // NOTE: THIS IS GRAPH EDGES, while we're working with geometrical edges
     auto graph_edges = graph.index();
-
-    // all the intervals
-    typedef pair<double, double> dblpair_t;
-    typedef map<geom_id, vector<dblpair_t> > Diagram;
+    auto graph_nodes = graph.nodes();
 
 
-//    Diagram hor_diagram;
+    Diagram hor_diagram;
+    // computing one-dimensional diagram for all the geometrical nodes
+    size_t iterations = 0;
+    //
+    vector<dblpair_t> widths(route.size()-1);
 
-//    // computing one-dimensional diagram for all the geometrical nodes
-//    // TODO: NODES ARE ACTUALLY COMPOUND
-//    // initialisation
+    for (const Edge *edge : graph_edges)
+    {
+        ++iterations;
+        if (iterations % 100000 == 0)
+            cout << iterations << endl;
 
-//    //
-//    vector<dblpair_t> widths(route.size()-1);
+        // checking whether the
+        double length = edge->length;
+        UTMNode ep = graph_nodes[edge->from];
+        bool need_check = false;
+        for (const UTMNode &r : route)
+            if (distance(r, ep) - error < length)
+                need_check = true;
+        if (!need_check)
+            continue;
 
-//    for (const Edge *edge : graph_edges)
-//    {
-//        auto geom = edge->geometry;
-//        for (int32_t gid = 0; gid < geom.size(); ++gid)
-//        {
-//            // this is the read node id
-//            geom_id curr_id = edge->geometry_id(gid);
+        auto geom = edge->geometry;
+        size_t geom_size = geom.size();
+        for (int32_t gid = 0; gid < geom_size; ++gid)
+        {
+            // this is the read node id
+            geom_id curr_id = edge->geometry_id(gid);
 
-//            // for all the route edges, saving c & d
-//            for (int32_t rid = 0; rid < route.size()-1; ++rid)
-//            {
-//                auto result = line_circle_distance(route[rid], route[rid+1], geom[gid], error);
-//                filter(result);
-//                widths[rid] = (result.size() > 0) ? dblpair_t(result[0], result[1]) : dblpair_t(1, 0);
-//            }
-//            hor_diagram[curr_id] = widths;
-//        }
-//    }
+            size_t count = 0;
+            // for all the route edges, saving c & d
+            for (int32_t rid = 0; rid < route.size()-1; ++rid)
+            {
+                auto result = line_circle_distance(route[rid], route[rid+1], geom[gid], error);
+                filter(result);
+                if (result.size() > 0)
+                {
+                    widths[rid] = dblpair_t(result[0], result[1]);
+                    ++count;
+                }
+                else
+                    widths[rid] = dblpair_t(1, 0);
+            }
+
+            if (count > 0)
+                hor_diagram[curr_id] = widths;
+        }
+    }
+    cout << "horizontal diagram size:" << hor_diagram.size() << endl;
+    cout << "------------------------" << endl;
 
 
+    cout << "starting vertical diagram builder" << endl;
     // for each (i,j) \in E, we have k =(route.size()) a, b (vertical spikes)
     map<geom_id, Diagram> vert_diagram;
-
-
-
-    // now computing edge - to - route diagram points
-    // TODO: unnecessary operations
-
     vector<dblpair_t> heights(route.size());
 
-
-
-    size_t iteration = 0;
+    iteration = 0;
     for (const Edge *edge : graph_edges)
     {
         ++iteration;
         if (iteration % 100000 == 0)
             cout << iteration << endl;
 
-        // TODO: elaborate on this!!!
-        size_t count = 0;
+//         checking whether the
+        UTMNode ep = graph_nodes[edge->from];
+        double length = edge->length;
+        bool check_needed = false;
         for (const UTMNode &r : route)
-            if (distance(r, graph_nodes[edge->from])-error > edge->length)
-                ++count;
-
-        if (count == route.size())
+            if (distance(r, ep) - error < length)
+                check_needed = true;
+        if (!check_needed)
             continue;
+
 
         size_t geom_size = edge->geometry.size();
         for (int32_t gid = 0; gid < geom_size; ++gid)
@@ -152,11 +192,13 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *index, const
         }
     }
 
-    cout << vert_diagram.size() << endl;
+    cout << "vertical diagram size:" << vert_diagram.size() << endl;
+    cout << "----------------------" << endl;
 
     // the priority queue Q
     priority_queue<Interval> queue;
-    // putting all white intervals starting from the leftmost point
+
+    // putting all degenerate intervals starting from the leftmost point
 
     while (!queue.empty())
     {
@@ -177,3 +219,4 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *index, const
 
     return result;
 }
+

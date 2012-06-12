@@ -10,37 +10,24 @@ using namespace std;
 #include "input.h"
 #include "spatial.h"
 
+#include "frechet.h"
 
 #include "learning.h"
 
 
-int main()
+void construct(string file_prefix, id_type index_id)
 {
-
-    string filePrefix = "alldata";
-    id_type indexID = 1;
-
     RoadGraph graph;
-    cout << "loading road graph" << endl;
-    graph.loadBinary("../data/graph.dat");
+    graph.loadUTM("../data/test/nodes.txt", "../data/test/edges.txt", "../data/test/edgegeometry.txt");
 
-    //graph.load("../data/WA_Nodes.txt", "../data/WA_Edges.txt", "../data/WA_EdgeGeometry.txt");
-    //graph.saveBinary("../data/graph.dat");
+    auto storage = unique_ptr<IStorageManager>(StorageManager::createNewMemoryStorageManager());
+    auto tree = unique_ptr<ISpatialIndex>(RTree::createNewRTree(*storage, FILL_FACTOR, CAPACITY, CAPACITY, 2, RTree::RV_RSTAR, index_id));
 
-    if (!exists(filePrefix + ".dat"))
+    cout << "index id: " << index_id << endl;
+
+    int64_t edgeCount = 0;
+    for (const Edge *e : graph.index())
     {
-        cout << "creating spatial index" << endl;
-
-
-        auto storage = auto_ptr<IStorageManager>(StorageManager::createNewDiskStorageManager(filePrefix, PAGE_SIZE));
-        auto tree = auto_ptr<ISpatialIndex>(RTree::createNewRTree(*storage, FILL_FACTOR, CAPACITY, CAPACITY, 2, RTree::RV_RSTAR, indexID));
-
-        cout << "index id: " << indexID << endl;
-
-
-        int64_t edgeCount = 0;
-        for (const Edge *e : graph.index())
-        {
             int64_t nodeCount = 0;
             for (const UTMNode &n: e->geometry)
             {
@@ -49,24 +36,30 @@ int main()
                 ++nodeCount;
             }
             ++edgeCount;
-        }
     }
-    else
-    {
-        cout << "loading spatial index" << endl;
 
-        Input input("../data/input/input_02.txt");
+}
 
-        auto storage = auto_ptr<IStorageManager>(StorageManager::loadDiskStorageManager(filePrefix));
-        auto tree = auto_ptr<ISpatialIndex>(RTree::loadRTree(*storage, indexID));
+int main()
+{
+    string file_prefix = "alldata";
+    id_type index_id = 1;
 
-        Output output1 = mmatch::match(graph, tree.get(), input);
-        cout << "original: " <<  output1.getMaxError() << endl;
+    RoadGraph graph;
 
-        Output output2 = mmatch::backtracingMatch(graph, tree.get(), input);
-        cout << "with queue: " <<  output2.getMaxError() << endl;
+    string dataset = "03";
 
-    }
+    graph.loadBinary("../data/graph.dat");
+    Input input("../data/input/input_" + dataset + ".txt");
+
+    auto storage = unique_ptr<IStorageManager>(StorageManager::loadDiskStorageManager(file_prefix));
+    auto tree = unique_ptr<ISpatialIndex>(RTree::loadRTree(*storage, index_id));
+
+    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
+    Output about("../data/output/output_" + dataset + ".txt");
+
+    cout << output.evaluate(about) << endl;
+
 
     return 0;
 }
