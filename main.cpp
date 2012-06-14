@@ -55,13 +55,15 @@ int main()
 
     string dataset = "02";
     graph.loadBinary("../data/graph.dat");
-    Input input("../data/input/input_" + dataset + ".500.txt");
+    Input input("../data/input/input_" + dataset + ".400.txt");
     auto tree = load(file_prefix, index_id);
 
     clock_t time = clock();
     Output output = mmatch::match_frechet(graph, tree.get(), input);
     cout << "finished in: " << double(clock() - time) / (CLOCKS_PER_SEC) << endl;
-    Output about("../data/output/output_" + dataset + ".500.txt");
+
+//    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
+    Output about("../data/output/output_" + dataset + ".400.txt");
     cout << output.evaluate(about) << endl;
 
 

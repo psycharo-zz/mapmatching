@@ -105,9 +105,6 @@ private:
 }; // end of class Output
 
 
-double evaluate(const Output &a, const Output &b);
-
-
 }
 
 #endif // INPUT_H

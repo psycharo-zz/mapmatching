@@ -43,8 +43,8 @@ double distanceMeasure(const UTMNode &p, const UTMNode &cndt1, const UTMNode &cn
 
 double normalizedMeasure(double d)
 {
-    double result = (MAX_ERROR - d);
-    return result / MAX_ERROR;
+    double result = (MAX_ERROR_LOCAL - d);
+    return result / MAX_ERROR_LOCAL;
 }
 
 

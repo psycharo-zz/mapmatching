@@ -3,11 +3,8 @@
 
 #include "graph.h"
 #include "input.h"
+#include "spatial.h"
 
-#include <spatialindex/SpatialIndex.h>
-
-
-using namespace SpatialIndex;
 
 
 namespace mmatch {
@@ -17,7 +14,7 @@ static const double ANGLE_WEIGHT = 0.5;
 static const double DIST_WEIGHT = 0.5;
 
 // maximum error in distance
-static const double MAX_ERROR = 150;
+static const double MAX_ERROR_LOCAL = 150;
 
 
 
@@ -33,7 +30,7 @@ double avgDistance(const RoadGraph &graph, const Input &input, const Output &out
 Output match(const RoadGraph &graph, ISpatialIndex *index, const Input &input);
 
 //! backtracing algo
-Output backtracing_match(const RoadGraph &graph, ISpatialIndex *tree, const Input &input, const double max_error = MAX_ERROR);
+Output backtracing_match(const RoadGraph &graph, ISpatialIndex *tree, const Input &input, const double max_error = MAX_ERROR_LOCAL);
 
 } // namespace mmatch
 
