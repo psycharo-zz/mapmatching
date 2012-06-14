@@ -351,23 +351,13 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
 {
     Output out(input);
 
-    auto route = input.nodes();
-
-
-    MapPoint query(route[0]);
-    MapNeighborVisitor visitor;
-
-    // initialisation step, searching for several nearest points
-    tree->nearestNeighborQuery(10, query, visitor);
-
-
     // mapping diagram_id to its weight
     unordered_map<diagram_id, double> dist;
     multiset<diagram_id> queue;
     unordered_map<diagram_id, multiset<diagram_id>::iterator> index;
 
-    auto update_value = [&dist, &queue, &index] (diagram_id id) {
-
+    auto update_value = [&dist, &queue, &index] (diagram_id id)
+    {
         // if such a value already exists
         if (index.count(id))
         {
@@ -378,17 +368,143 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
         dist[id] = id.weight;
     };
 
-     for (id_type src : visitor.neighbors)
+
+    auto relax_value = [&dist, &queue, &index, &update_value] (diagram_id id)
+    {
+
+        if (dist.count(id))
+        {
+            // if the value is in there, we should only update the value
+            // is more optimal that the one stored (i.e. dist[id] < id.weight)
+            if (dist[id] < id.weight)
+                update_value(id);
+        }
+        else
+            update_value(id);
+    };
+
+
+    auto pop_value = [&queue, &index] () -> diagram_id
+    {
+        assert(!queue.empty());
+
+        diagram_id id = *queue.begin();
+        size_t ret = index.erase(id);
+        assert(ret != 0);
+        queue.erase(queue.begin());
+        return id;
+    };
+
+    auto route = input.nodes();
+
+    assert(route.size() >= 2);
+
+    MapPoint query(route[0]);
+    MapNeighborVisitor visitor;
+    // initialisation step, searching for several nearest points
+    tree->nearestNeighborQuery(10, query, visitor);
+    for (id_type src : visitor.neighbors)
     {
         geom_id id = graph.edge(EDGE_ID(src))->geometry_id(GEOM_ID(src));
-        update_value(diagram_id(id, 0, diagram_id::SOURCE, 0));
+        double weight = distance(graph.coord(id), route[0], route[1]);
+        update_value(diagram_id(id, 0, diagram_id::HORIZONTAL, weight));
     }
 
 
-    for (auto p : queue) {
-        cout << p << endl;
-    }
+    while (!queue.empty())
+    {
+        diagram_id curr = pop_value();
 
+
+        UTMNode curr_coord = graph.coord(curr.node);
+        cout << curr << " " << curr_coord << endl;
+
+        // CHECK IF THIS CAN INFLUENCE ANYTHING
+        double curr_dist = dist[curr];
+
+        if (curr.type == diagram_id::HORIZONTAL)
+        {
+
+
+            for (geom_id adj : graph.adjacent(curr.node))
+            {
+                UTMNode adj_coord = graph.coord(adj);
+                double weight = -1;
+                diagram_id did(curr.node, 0, diagram_id::VERTICAL, -1);
+
+                // LEFT
+                weight = max(distance(route[curr.route], curr_coord, adj_coord), curr_dist);
+                did = diagram_id(curr.node, curr.route, diagram_id::VERTICAL, weight);
+                relax_value(did);
+                // RIGHT
+                weight = max(distance(route[curr.route+1], curr_coord, adj_coord), curr_dist);
+                did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
+                relax_value(did);
+                // TOP
+                weight = max(distance(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
+                did = diagram_id(adj, curr.route, diagram_id::HORIZONTAL, weight);
+                relax_value(did);
+
+                cout << adj << " : " << weight << endl;
+            }
+
+
+        }
+        else if (curr.type == diagram_id::VERTICAL)
+        {
+            for (geom_id adj : graph.adjacent(curr.node))
+            {
+                UTMNode adj_coord = graph.coord(adj);
+                double weight = -1;
+                diagram_id did(curr.node, 0, diagram_id::VERTICAL, -1);
+
+                if (curr.route > 0)
+                {
+                    // all the leftmost
+                    // LEFT
+                    weight = max(distance(route[curr.route-1], curr_coord, adj_coord), curr_dist);
+                    did = diagram_id(curr.node, curr.route-1, diagram_id::VERTICAL, weight);
+                    relax_value(did);
+                    // BOTTOM
+                    weight = max(distance(curr_coord, route[curr.route-1], route[curr.route]), curr_dist);
+                    did = diagram_id(curr.node, curr.route-1, diagram_id::HORIZONTAL, weight);
+                    relax_value(did);
+                    // TOP
+                    weight = max(distance(adj_coord, route[curr.route-1], route[curr.route]), curr_dist);
+                    did = diagram_id(adj, curr.route-1, diagram_id::HORIZONTAL, weight);
+                    relax_value(did);
+                }
+
+                if (curr.route < route.size()-1)
+                {
+                    // all the rightmost
+
+                    // RIGHT
+                    weight = max(distance(route[curr.route+1], curr_coord, adj_coord), curr_dist);
+                    did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
+                    relax_value(did);
+                    // BOTTOM
+                    weight = max(distance(curr_coord, route[curr.route], route[curr.route+1]), curr_dist);
+                    did = diagram_id(curr.node, curr.route+1, diagram_id::HORIZONTAL, weight);
+                    relax_value(did);
+                    // TOP
+                    weight = max(distance(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
+                    did = diagram_id(adj, curr.route+1, diagram_id::HORIZONTAL, weight);
+                    relax_value(did);
+
+                }
+
+
+
+                cout << adj << ":" << weight << endl;
+            }
+
+
+        }
+
+        cout << endl;
+
+    }
 
 
     return out;
