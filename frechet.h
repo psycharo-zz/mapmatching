@@ -18,7 +18,7 @@ namespace mmatch
 
 
 static const size_t NN_NUMBER_GLOBAL = 10000;
-static const double MAX_ERROR_GLOBAL = 250;
+static const double MAX_ERROR_GLOBAL = 2000;
 
 
 //! frechet-based algorithm

@@ -311,12 +311,14 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     // mapping diagram_id to its weight
     unordered_map<diagram_id, double> dist;
 
+    static const size_t BUCKETS = 100000;
+
     multiset<diagram_id> queue;
-    unordered_map<diagram_id, multiset<diagram_id>::iterator> index;
-    unordered_map<diagram_id, diagram_id> optimal;
+    unordered_map<diagram_id, multiset<diagram_id>::iterator> index(BUCKETS);
+    unordered_map<diagram_id, diagram_id> optimal(BUCKETS);
 
 
-    auto update_value = [&dist, &queue, &index] (diagram_id id)
+    auto update_value = [&dist, &queue, &index] (const diagram_id &id)
     {
         if (id.weight < MAX_ERROR_GLOBAL)
         {
@@ -331,13 +333,22 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
         }
     };
 
-    auto relax_value = [&dist, &queue, &index, &update_value, &optimal] (diagram_id id, diagram_id curr)
+    auto set_value = [&dist, &queue, &index] (const diagram_id &id)
     {
-        if (dist.count(id))
+        auto it = index[id];
+        queue.erase(it);
+        index[id] = queue.insert(id);
+        dist[id] = id.weight;
+    };
+
+    auto relax_value = [&dist, &queue, &index, &update_value, &set_value, &optimal] (const diagram_id &id, const diagram_id &curr)
+    {
+        auto it = dist.find(id);
+        if (it != dist.end())
         {
             // if the value is in there, we should only update the value
             // is more optimal that the one stored (i.e. dist[id] < id.weight)
-            if (dist[id] < id.weight)
+            if (it->second < id.weight)
             {
                 update_value(id);
                 optimal.insert({id, curr});
@@ -351,13 +362,12 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     };
 
 
+
+
     auto pop_value = [&queue, &index] () -> diagram_id
     {
-        assert(!queue.empty());
-
         diagram_id id = *queue.begin();
         size_t ret = index.erase(id);
-        assert(ret != 0);
         queue.erase(queue.begin());
         return id;
     };
@@ -373,7 +383,7 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     for (id_type src : visitor.neighbors)
     {
         geom_id id = graph.edge(EDGE_ID(src))->geometry_id(GEOM_ID(src));
-        double weight = distance(graph.coord(id), route[0], route[1]);
+        double weight = distance2(graph.coord(id), route[0], route[1]);
         update_value(diagram_id(id, 0, diagram_id::HORIZONTAL, weight));
     }
 
@@ -397,15 +407,15 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                 diagram_id did(curr.node, 0, diagram_id::VERTICAL, -1);
 
                 // LEFT
-                weight = max(distance(route[curr.route], curr_coord, adj_coord), curr_dist);
+                weight = max(distance2(route[curr.route], curr_coord, adj_coord), curr_dist);
                 did = diagram_id(curr.node, curr.route, diagram_id::VERTICAL, weight);
                 relax_value(did, curr);
                 // RIGHT
-                weight = max(distance(route[curr.route+1], curr_coord, adj_coord), curr_dist);
+                weight = max(distance2(route[curr.route+1], curr_coord, adj_coord), curr_dist);
                 did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
                 relax_value(did, curr);
                 // TOP
-                weight = max(distance(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
+                weight = max(distance2(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
                 did = diagram_id(adj, curr.route, diagram_id::HORIZONTAL, weight);
                 relax_value(did, curr);
             }
@@ -424,15 +434,15 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                 {
                     // all the leftmost
                     // LEFT
-                    weight = max(distance(route[curr.route-1], curr_coord, adj_coord), curr_dist);
+                    weight = max(distance2(route[curr.route-1], curr_coord, adj_coord), curr_dist);
                     did = diagram_id(curr.node, curr.route-1, diagram_id::VERTICAL, weight);
                     relax_value(did, curr);
                     // BOTTOM
-                    weight = max(distance(curr_coord, route[curr.route-1], route[curr.route]), curr_dist);
+                    weight = max(distance2(curr_coord, route[curr.route-1], route[curr.route]), curr_dist);
                     did = diagram_id(curr.node, curr.route-1, diagram_id::HORIZONTAL, weight);
                     relax_value(did, curr);
                     // TOP
-                    weight = max(distance(adj_coord, route[curr.route-1], route[curr.route]), curr_dist);
+                    weight = max(distance2(adj_coord, route[curr.route-1], route[curr.route]), curr_dist);
                     did = diagram_id(adj, curr.route-1, diagram_id::HORIZONTAL, weight);
                     relax_value(did, curr);
                 }
@@ -442,18 +452,17 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                     // all the rightmost
 
                     // RIGHT
-                    weight = max(distance(route[curr.route+1], curr_coord, adj_coord), curr_dist);
+                    weight = max(distance2(route[curr.route+1], curr_coord, adj_coord), curr_dist);
                     did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
                     relax_value(did, curr);
                     // BOTTOM
-                    weight = max(distance(curr_coord, route[curr.route], route[curr.route+1]), curr_dist);
+                    weight = max(distance2(curr_coord, route[curr.route], route[curr.route+1]), curr_dist);
                     did = diagram_id(curr.node, curr.route+1, diagram_id::HORIZONTAL, weight);
                     relax_value(did, curr);
                     // TOP
-                    weight = max(distance(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
+                    weight = max(distance2(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
                     did = diagram_id(adj, curr.route+1, diagram_id::HORIZONTAL, weight);
                     relax_value(did, curr);
-
                 }
             }
 

@@ -316,6 +316,27 @@ inline double distance(const UTMNode &p,
 }
 
 
+inline double distance2(const UTMNode &p,
+                        const UTMNode &a, const UTMNode &b)
+{
+    const double len = (b - a).length2();
+    if (fabs(len) <= EPS)
+        return (p - a).length2();
+
+    double t = (p - a) * (b - a) / len;
+
+    if (t < 0.0)
+        return (p - a).length2();
+    if (t > 1.0)
+        return (p - b).length2();
+
+    return (a + (b - a) * t - p).length2();
+}
+
+
+
+
+
 //float minimum_distance(vec2 v, vec2 w, vec2 p) {
 //  // Return minimum distance between line segment vw and point p
 //  const float l2 = length_squared(v, w);  // i.e. |w-v|^2 -  avoid a sqrt

@@ -53,21 +53,28 @@ int main()
 
     RoadGraph graph;
 
-    string dataset = "02";
+    string dataset = "07.txt";
     graph.loadBinary("../data/graph.dat");
-    Input input("../data/input/input_" + dataset + ".400.txt");
+    Input input("../data/input/input_" + dataset);
+    Output test_output("../data/output/output_" + dataset);
+
+
     auto tree = load(file_prefix, index_id);
 
-    clock_t time = clock();
-    Output output = mmatch::match_frechet(graph, tree.get(), input);
+    clock_t time;
+
+
+    cout << "frechet" << endl;
+    time = clock();
+    Output output_frechet = mmatch::match_frechet(graph, tree.get(), input);
+    cout << output_frechet.evaluate(test_output) << endl;
     cout << "finished in: " << double(clock() - time) / (CLOCKS_PER_SEC) << endl;
 
-//    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
-    Output about("../data/output/output_" + dataset + ".400.txt");
-    cout << output.evaluate(about) << endl;
-
-
-
+    cout << "incremental" << endl;
+    time = clock();
+    Output output_incr = mmatch::backtracing_match(graph, tree.get(), input, 100);
+    cout << output_incr.evaluate(test_output) << endl;
+    cout << "finished in: " << double(clock() - time) / (CLOCKS_PER_SEC) << endl;
 
     return 0;
 }
