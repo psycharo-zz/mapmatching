@@ -69,154 +69,154 @@ vector<UTMNode> filter_input(const Input &input)
 
 
 
-Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *index, const Input &input)
-{
-    Output result(input);
+//Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *index, const Input &input)
+//{
+//    Output result(input);
 
 
-    size_t iteration = 0;
-    cout << "--------------------------" << endl;
-    cout << "input size before filtering: " << input.nodes().size() << endl;
-    auto route = filter_input(input);
-    cout << "input size after filtering: " << route.size() << endl;
-    cout << "--------------------------" << endl;
+//    size_t iteration = 0;
+//    cout << "--------------------------" << endl;
+//    cout << "input size before filtering: " << input.nodes().size() << endl;
+//    auto route = filter_input(input);
+//    cout << "input size after filtering: " << route.size() << endl;
+//    cout << "--------------------------" << endl;
 
-    cout << "starting horizontal diagram builder" << endl;
+//    cout << "starting horizontal diagram builder" << endl;
 
-    // DEBUG
-    double error = 10;
+//    // DEBUG
+//    double error = 10;
 
-    // NOTE: THIS IS GRAPH EDGES, while we're working with geometrical edges
-    auto graph_edges = graph.index();
-    auto graph_nodes = graph.nodes();
-
-
-    Diagram hor_diagram;
-    // computing one-dimensional diagram for all the geometrical nodes
-    size_t iterations = 0;
-    //
-    vector<dblpair_t> widths(route.size()-1);
-
-    for (const Edge *edge : graph_edges)
-    {
-        ++iterations;
-        if (iterations % 100000 == 0)
-            cout << iterations << endl;
-
-        // checking whether the
-        double length = edge->length;
-        UTMNode ep = graph_nodes[edge->from];
-        bool need_check = false;
-        for (const UTMNode &r : route)
-            if (distance(r, ep) - error < length)
-                need_check = true;
-        if (!need_check)
-            continue;
-
-        auto geom = edge->geometry;
-        size_t geom_size = geom.size();
-        for (int32_t gid = 0; gid < geom_size; ++gid)
-        {
-            // this is the read node id
-            geom_id curr_id = edge->geometry_id(gid);
-
-            size_t count = 0;
-            // for all the route edges, saving c & d
-            for (int32_t rid = 0; rid < route.size()-1; ++rid)
-            {
-                auto result = line_circle_distance(route[rid], route[rid+1], geom[gid], error);
-                filter(result);
-                if (result.size() > 0)
-                {
-                    widths[rid] = dblpair_t(result[0], result[1]);
-                    ++count;
-                }
-                else
-                    widths[rid] = dblpair_t(1, 0);
-            }
-
-            if (count > 0)
-                hor_diagram[curr_id] = widths;
-        }
-    }
-    cout << "horizontal diagram size:" << hor_diagram.size() << endl;
-    cout << "------------------------" << endl;
+//    // NOTE: THIS IS GRAPH EDGES, while we're working with geometrical edges
+//    auto graph_edges = graph.index();
+//    auto graph_nodes = graph.nodes();
 
 
-    cout << "starting vertical diagram builder" << endl;
-    // for each (i,j) \in E, we have k =(route.size()) a, b (vertical spikes)
-    map<geom_id, Diagram> vert_diagram;
-    vector<dblpair_t> heights(route.size());
+//    Diagram hor_diagram;
+//    // computing one-dimensional diagram for all the geometrical nodes
+//    size_t iterations = 0;
+//    //
+//    vector<dblpair_t> widths(route.size()-1);
 
-    iteration = 0;
-    for (const Edge *edge : graph_edges)
-    {
-        ++iteration;
-        if (iteration % 100000 == 0)
-            cout << iteration << endl;
+//    for (const Edge *edge : graph_edges)
+//    {
+//        ++iterations;
+//        if (iterations % 100000 == 0)
+//            cout << iterations << endl;
 
-//         checking whether the
-        UTMNode ep = graph_nodes[edge->from];
-        double length = edge->length;
-        bool check_needed = false;
-        for (const UTMNode &r : route)
-            if (distance(r, ep) - error < length)
-                check_needed = true;
-        if (!check_needed)
-            continue;
+//        // checking whether the
+//        double length = edge->length;
+//        UTMNode ep = graph_nodes[edge->from];
+//        bool need_check = false;
+//        for (const UTMNode &r : route)
+//            if (distance(r, ep) - error < length)
+//                need_check = true;
+//        if (!need_check)
+//            continue;
 
+//        auto geom = edge->geometry;
+//        size_t geom_size = geom.size();
+//        for (int32_t gid = 0; gid < geom_size; ++gid)
+//        {
+//            // this is the read node id
+//            geom_id curr_id = edge->geometry_id(gid);
 
-        size_t geom_size = edge->geometry.size();
-        for (int32_t gid = 0; gid < geom_size; ++gid)
-        {
-            geom_id curr_id = edge->geometry_id(gid);
-            // now getting all the adjacent edges
-            for (geom_id adj : graph.adjacent(curr_id))
-            {
+//            size_t count = 0;
+//            // for all the route edges, saving c & d
+//            for (int32_t rid = 0; rid < route.size()-1; ++rid)
+//            {
+//                auto result = line_circle_distance(route[rid], route[rid+1], geom[gid], error);
+//                filter(result);
+//                if (result.size() > 0)
+//                {
+//                    widths[rid] = dblpair_t(result[0], result[1]);
+//                    ++count;
+//                }
+//                else
+//                    widths[rid] = dblpair_t(1, 0);
+//            }
 
-                size_t count = 0;
-                for (int32_t rid = 0; rid < route.size(); ++rid)
-                {
-                    auto result = line_circle_distance(graph.coord(curr_id), graph.coord(adj), route[rid], error);
-                    filter(result);
-                    if (result.size() > 0)
-                    {
-                        heights[rid] = dblpair_t(result[0], result[1]);
-                        count += 1;
-                    }
-                    else
-                        heights[rid] = dblpair_t(1, 0);
-                }
-                if (count > 0)
-                    vert_diagram[curr_id][adj] = heights;
-            }
-        }
-    }
-
-    cout << "vertical diagram size:" << vert_diagram.size() << endl;
-    cout << "----------------------" << endl;
-
-    // the priority queue Q
-    priority_queue<Interval> queue;
-
-    // putting all degenerate intervals starting from the leftmost point
-
-    while (!queue.empty())
-    {
-        Interval interval = queue.top();
-        queue.pop();
-
-        cout << interval << endl;
+//            if (count > 0)
+//                hor_diagram[curr_id] = widths;
+//        }
+//    }
+//    cout << "horizontal diagram size:" << hor_diagram.size() << endl;
+//    cout << "------------------------" << endl;
 
 
-        if (true) // actually found the solution
-        {
+//    cout << "starting vertical diagram builder" << endl;
+//    // for each (i,j) \in E, we have k =(route.size()) a, b (vertical spikes)
+//    map<geom_id, Diagram> vert_diagram;
+//    vector<dblpair_t> heights(route.size());
 
-        }
-    }
+//    iteration = 0;
+//    for (const Edge *edge : graph_edges)
+//    {
+//        ++iteration;
+//        if (iteration % 100000 == 0)
+//            cout << iteration << endl;
 
-    return result;
-}
+////         checking whether the
+//        UTMNode ep = graph_nodes[edge->from];
+//        double length = edge->length;
+//        bool check_needed = false;
+//        for (const UTMNode &r : route)
+//            if (distance(r, ep) - error < length)
+//                check_needed = true;
+//        if (!check_needed)
+//            continue;
+
+
+//        size_t geom_size = edge->geometry.size();
+//        for (int32_t gid = 0; gid < geom_size; ++gid)
+//        {
+//            geom_id curr_id = edge->geometry_id(gid);
+//            // now getting all the adjacent edges
+//            for (geom_id adj : graph.adjacent(curr_id))
+//            {
+
+//                size_t count = 0;
+//                for (int32_t rid = 0; rid < route.size(); ++rid)
+//                {
+//                    auto result = line_circle_distance(graph.coord(curr_id), graph.coord(adj), route[rid], error);
+//                    filter(result);
+//                    if (result.size() > 0)
+//                    {
+//                        heights[rid] = dblpair_t(result[0], result[1]);
+//                        count += 1;
+//                    }
+//                    else
+//                        heights[rid] = dblpair_t(1, 0);
+//                }
+//                if (count > 0)
+//                    vert_diagram[curr_id][adj] = heights;
+//            }
+//        }
+//    }
+
+//    cout << "vertical diagram size:" << vert_diagram.size() << endl;
+//    cout << "----------------------" << endl;
+
+//    // the priority queue Q
+//    priority_queue<Interval> queue;
+
+//    // putting all degenerate intervals starting from the leftmost point
+
+//    while (!queue.empty())
+//    {
+//        Interval interval = queue.top();
+//        queue.pop();
+
+//        cout << interval << endl;
+
+
+//        if (true) // actually found the solution
+//        {
+
+//        }
+//    }
+
+//    return result;
+//}
 
 
 
@@ -261,7 +261,7 @@ struct diagram_id
 
     bool operator <(const diagram_id &other) const
     {
-        return weight > other.weight;
+        return weight < other.weight;
     }
 };
 
@@ -269,7 +269,15 @@ struct diagram_id
 
 ostream &operator<<(ostream &os, const diagram_id &did)
 {
-    os << did.node << " " << did.route << " " << did.type << " " << did.weight;
+    string name;
+    if (did.type == diagram_id::HORIZONTAL)
+        name = "HOR";
+    else if (did.type == diagram_id::VERTICAL)
+        name = "VERT";
+    else if (did.type == diagram_id::SOURCE)
+        name = "SRC";
+
+    os << did.node << " route(" << did.route << ") type(" << name << ") w(" << did.weight << ")";
     return os;
 }
 
@@ -339,6 +347,54 @@ double length(const vector<UTMNode> &nodes)
 
 
 
+Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const Input &input)
+{
+    Output out(input);
+
+    auto route = input.nodes();
+
+
+    MapPoint query(route[0]);
+    MapNeighborVisitor visitor;
+
+    // initialisation step, searching for several nearest points
+    tree->nearestNeighborQuery(10, query, visitor);
+
+
+    // mapping diagram_id to its weight
+    unordered_map<diagram_id, double> dist;
+    multiset<diagram_id> queue;
+    unordered_map<diagram_id, multiset<diagram_id>::iterator> index;
+
+    auto update_value = [&dist, &queue, &index] (diagram_id id) {
+
+        // if such a value already exists
+        if (index.count(id))
+        {
+            auto it = index[id];
+            queue.erase(it);
+        }
+        index[id] = queue.insert(id);
+        dist[id] = id.weight;
+    };
+
+     for (id_type src : visitor.neighbors)
+    {
+        geom_id id = graph.edge(EDGE_ID(src))->geometry_id(GEOM_ID(src));
+        update_value(diagram_id(id, 0, diagram_id::SOURCE, 0));
+    }
+
+
+    for (auto p : queue) {
+        cout << p << endl;
+    }
+
+
+
+    return out;
+}
+
+
 Output mmatch::match_frechet_weak(const RoadGraph &graph, ISpatialIndex *tree, const Input &input)
 {
     Output out(input);
@@ -350,74 +406,84 @@ Output mmatch::match_frechet_weak(const RoadGraph &graph, ISpatialIndex *tree, c
     MapNeighborVisitor visitor;
 
     // initialisation step, searching for several nearest points
-    tree->nearestNeighborQuery(NN_NUMBER, query, visitor);
-
+    tree->nearestNeighborQuery(1, query, visitor);
 
     unordered_map<diagram_id, double> lengths;
 
-    priority_queue<diagram_id> current;
-    set<geom_id> sources;
+    set<diagram_id> current_set;
+//    priority_queue<diagram_id> current;
     for (id_type src : visitor.neighbors)
     {
         geom_id id = graph.edge(EDGE_ID(src))->geometry_id(GEOM_ID(src));
         diagram_id did(id, 0, diagram_id::SOURCE, 0);
         if (!lengths.count(did))
         {
-            current.push(did);
-            sources.insert(id);
+            current_set.insert(did);
             lengths[did] = 0;
         }
     }
-    sources.clear();
+
 
     unordered_map<diagram_id, diagram_id> optimal;
 
-    auto relax = [&optimal,&current,&lengths] (diagram_id did, diagram_id curr, double weight)
+    auto relax = [&optimal,&current_set,&lengths] (diagram_id &did, diagram_id curr, double weight)
     {
             if (lengths.count(did))
             {
-                if (lengths[did] > lengths[curr] + weight)
+                if (lengths[did] > max(weight, lengths[did]))
                 {
-                    lengths[did] = lengths[curr] + weight; // relaxing
-                    optimal.insert({did, curr});
+                    did.weight = max(weight, lengths[curr]);
+                    lengths[did] = max(weight, lengths[curr]); // relaxing
+                    optimal.insert({{did, curr}});
+                    cout << "OLD RELAXING: new(" << did.weight << ") prev(" << lengths[curr] << ") weight(" << weight << ")" << endl;
                 }
+                else { cout << "SKIPPING RELAXATION: weight(" << weight << ") prev(" << lengths[curr] << ")" << endl;}
+
+
             }
             else
             {
                 // haven't meet this node yet
-                lengths[did] = lengths[curr] + weight;
-                optimal.insert({did, curr});
-                current.push(did);
+                did.weight = max(weight, lengths[curr]);
+                lengths[did] = did.weight;
+                cout << "NEW RELAXING: new(" << did.weight << ") prev(" << lengths[curr] << ") weight(" << weight << ")" << endl;
+                optimal.insert({{did, curr}});
+                current_set.insert(did);
             }
 
     };
 
-    diagram_id curr = current.top();
-    while (!current.empty())
+
+
+
+    diagram_id curr = *current_set.cbegin();
+
+   cout << "THE FIRST ONE:" << curr << endl;
+
+
+    return out;
+    while (!current_set.empty())
     {
-        curr = current.top();
-        current.pop();
+        curr = *current_set.cbegin();
+        current_set.erase(curr);
 
-        cout << curr << endl;
-        cout << "---------------------------" << endl;
 
-        if (curr.route == route.size())
-        {
-            // adding the topmost
-            cout << "found" << endl;
+        if (curr.route == route.size()-1)
             break;
-        }
 
         if (curr.type == diagram_id::SOURCE)
         {
             double weight = distance(graph.coord(curr.node), route[0], route[1]);
-            diagram_id did(curr.node, curr.route, diagram_id::HORIZONTAL, weight);
-            lengths[did] = weight;
-            current.push(did);
+            diagram_id did(curr.node, 0, diagram_id::HORIZONTAL, weight);
+            relax(did, curr, weight);
         }
         else if (curr.type == diagram_id::HORIZONTAL)
         {
-            // for horizontal, adding
+            cout << "--------------------------" << endl;
+            cout << curr << " " << graph.coord(curr.node) << endl << endl;
+
+            cout << "ADJACENT:" << endl;
+           // for horizontal, adding
             UTMNode from_coord = graph.coord(curr.node);
 
             // actually need a cycle here TODO
@@ -429,20 +495,33 @@ Output mmatch::match_frechet_weak(const RoadGraph &graph, ISpatialIndex *tree, c
                 double weight = distance(to_coord, route[curr.route], route[curr.route+1]);
                 diagram_id did(to, curr.route, diagram_id::HORIZONTAL, weight);
                 relax(did, curr, weight);
+                cout << did << endl;
 
-                // LEFT VERTICAL
-                weight = distance(route[curr.route], from_coord, to_coord);
-                did = diagram_id(curr.node, curr.route, diagram_id::VERTICAL, weight);
-                relax(did, curr, weight);
+//                // LEFT VERTICAL
+//                weight = distance(route[curr.route], from_coord, to_coord);
+//                did = diagram_id(curr.node, curr.route, diagram_id::VERTICAL, weight);
+
+//                cout << weight << endl;
+
+//                relax(did, curr, weight);
                 // RIGHT VERTICAL
                 weight = distance(route[curr.route+1], from_coord, to_coord);
                 did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
                 relax(did, curr, weight);
+                cout << did << endl;
+                cout << endl;
+
             }
 
         }
         else if (curr.type == diagram_id::VERTICAL)
         {
+
+            cout << "-------------------------" << endl;
+            cout << "VERTICAL" << endl;
+            cout << curr << " " << graph.coord(curr.node) << endl;
+            cout << "ADJACENT:" << endl;
+
             // for horizontal, adding
             UTMNode from_coord = graph.coord(curr.node);
 
@@ -452,36 +531,82 @@ Output mmatch::match_frechet_weak(const RoadGraph &graph, ISpatialIndex *tree, c
 
                 UTMNode to_coord = graph.coord(to);
 
-                 // TOP HORIZONTAL
-                double weight = distance(to_coord, route[curr.route], route[curr.route+1]);
-                diagram_id did(curr.node, curr.route, diagram_id::HORIZONTAL, weight);
-                relax(did, curr, weight);
-                // BOTTOM HORIZONTAL
-                weight = distance(from_coord, route[curr.route], route[curr.route+1]);
-                did = diagram_id(curr.node, curr.route, diagram_id::HORIZONTAL, weight);
-                relax(did, curr, weight);
+//                 // TOP HORIZONTAL
+//                double weight = distance(to_coord, route[curr.route], route[curr.route+1]);
+//                diagram_id did(to, curr.route, diagram_id::HORIZONTAL, weight);
+//                relax(did, curr, weight);
+
+//                // BOTTOM HORIZONTAL
+//                weight = distance(from_coord, route[curr.route], route[curr.route+1]);
+//                did = diagram_id(curr.node, curr.route, diagram_id::HORIZONTAL, weight);
+//                relax(did, curr, weight);
 
                 // RIGHT VERTICLE
-                weight = distance(route[curr.route+1], from_coord, to_coord);
-                did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
+
+                double weight = distance(route[curr.route+1], from_coord, to_coord);
+                diagram_id did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
                 relax(did, curr, weight);
+                cout << did << endl;
             }
+
+            cout << "-----------------------" << endl << endl << endl;
 
 
 
         }
     }
 
-    while (!current.empty())
+
+
+    for (auto r : input.nodes())
     {
-        cout << current.top() << endl;
-        current.pop();
+      cout << distance(r, UTMNode(0, 0), UTMNode(5, 5)) << endl;
     }
 
+
+//    auto a = graph.nodes().at(graph.edge(1078283)->from);
+//    auto b = graph.nodes().at(graph.edge(1143918)->from);
+
+//    cout << distance(a, route.at(1421)) << endl;
+//    cout << distance(b, route.at(1421)) << endl;
+
+
+    // reconstructing the path
+    cout << "--------------------" << endl;
+    vector<geom_id> matched_route;
+
+    double res = 0;
+    for (size_t i = 0; i < route.size(); ++i)
+    {
+        cout << curr.node << endl;
+        matched_route.push_back(curr.node);
+        curr = optimal.find(curr)->second;
+    }
+    reverse(matched_route.begin(), matched_route.end());
+
+
+    for (size_t i = 0; i < matched_route.size(); ++i)
+    {
+        geom_id id = matched_route[i];
+
+        if (id.is_internal())
+            out.setEstimation(i, id.eid, 1.0);
+        else
+        {
+            vector<const Edge*> all = graph.outgoing(id.gid);
+            const Edge *edge = *find_if(all.begin(), all.end(),
+                                        [&id](const Edge *edge) { return (edge->to == id.gid) || (edge->from == id.gid); });
+            out.setEstimation(i, edge->id, 1.0);
+        }
+    }
 
 
     return out;
 }
+
+
+
+
 
 
 

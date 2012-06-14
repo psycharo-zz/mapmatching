@@ -77,9 +77,9 @@ struct geom_id
 inline std::ostream &operator<<(std::ostream &os, const geom_id &id)
 {
     if (id.is_internal())
-        os << "edge:" << id.eid << " geom:" << id.gid;
+        os << "edge(" << id.eid << ", " << id.gid << ")";
     else
-        os << "node:" << id.gid;
+        os << "node(" << id.gid << ")";
     return os;
 }
 

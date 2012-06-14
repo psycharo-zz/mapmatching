@@ -20,7 +20,7 @@ static const double WGS84_MIN = 6356752.3141;
 static const double WGS84_ECC = ((WGS84_MAJ * WGS84_MAJ) - (WGS84_MIN * WGS84_MIN)) / (WGS84_MAJ * WGS84_MAJ);
 
 //! "zero"
-static const double EPS = 1e-5;
+static const double EPS = 1e-3;
 
 
 

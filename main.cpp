@@ -17,9 +17,8 @@ using namespace std;
 
 unique_ptr<ISpatialIndex> load(string file_prefix, int index_id)
 {
-    auto storage = unique_ptr<IStorageManager>(StorageManager::loadDiskStorageManager(file_prefix));
+    auto storage = StorageManager::loadDiskStorageManager(file_prefix);
     auto tree = unique_ptr<ISpatialIndex>(RTree::loadRTree(*storage, index_id));
-
     return tree;
 }
 
@@ -53,19 +52,19 @@ int main()
     RoadGraph graph;
 
     auto tree = construct(index_id);
-
     Input input("../data/test/input.txt", true);
+
     graph.loadUTM("../data/test/nodes.txt", "../data/test/edges.txt", "../data/test/edgegeometry.txt");
-    Output output = mmatch::match_frechet_weak(graph, tree.get(), input);
+    Output output = mmatch::match_frechet(graph, tree.get(), input);
 
 //    string dataset = "03";
 //    graph.loadBinary("../data/graph.dat");
 //    Input input("../data/input/input_" + dataset + ".txt");
-//    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
+//    auto tree = load(file_prefix, index_id);
+//    Output output = mmatch::match_frechet_weak(graph, tree.get(), input);
+////    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
 //    Output about("../data/output/output_" + dataset + ".txt");
 //    cout << output.evaluate(about) << endl;
-
-//    Output output = mmatch::match_frechet_weak(graph, 0, input);
 
 
 
