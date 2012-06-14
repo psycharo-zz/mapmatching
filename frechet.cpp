@@ -356,6 +356,9 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     multiset<diagram_id> queue;
     unordered_map<diagram_id, multiset<diagram_id>::iterator> index;
 
+    unordered_map<diagram_id, diagram_id> optimal;
+
+
     auto update_value = [&dist, &queue, &index] (diagram_id id)
     {
         // if such a value already exists
@@ -368,19 +371,23 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
         dist[id] = id.weight;
     };
 
-
-    auto relax_value = [&dist, &queue, &index, &update_value] (diagram_id id)
+    auto relax_value = [&dist, &queue, &index, &update_value, &optimal] (diagram_id id, diagram_id curr)
     {
-
         if (dist.count(id))
         {
             // if the value is in there, we should only update the value
             // is more optimal that the one stored (i.e. dist[id] < id.weight)
             if (dist[id] < id.weight)
+            {
                 update_value(id);
+                optimal.insert({id, curr});
+            }
         }
         else
+        {
             update_value(id);
+            optimal.insert({id, curr});
+        }
     };
 
 
@@ -402,7 +409,7 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     MapPoint query(route[0]);
     MapNeighborVisitor visitor;
     // initialisation step, searching for several nearest points
-    tree->nearestNeighborQuery(100, query, visitor);
+    tree->nearestNeighborQuery(100000, query, visitor);
     for (id_type src : visitor.neighbors)
     {
         geom_id id = graph.edge(EDGE_ID(src))->geometry_id(GEOM_ID(src));
@@ -410,19 +417,11 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
         update_value(diagram_id(id, 0, diagram_id::HORIZONTAL, weight));
     }
 
-
+    diagram_id curr = pop_value();
     while (!queue.empty())
     {
-        diagram_id curr = pop_value();
-
         if (curr.route == route.size()-1)
-        {
-            cout << curr << endl;
             break;
-        }
-
-        if (curr.weight > 100 && curr.route > 400)
-            cout << curr.weight << " " << curr.route << endl;
 
         UTMNode curr_coord = graph.coord(curr.node);
 
@@ -440,15 +439,15 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                 // LEFT
                 weight = max(distance(route[curr.route], curr_coord, adj_coord), curr_dist);
                 did = diagram_id(curr.node, curr.route, diagram_id::VERTICAL, weight);
-                relax_value(did);
+                relax_value(did, curr);
                 // RIGHT
                 weight = max(distance(route[curr.route+1], curr_coord, adj_coord), curr_dist);
                 did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
-                relax_value(did);
+                relax_value(did, curr);
                 // TOP
                 weight = max(distance(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
                 did = diagram_id(adj, curr.route, diagram_id::HORIZONTAL, weight);
-                relax_value(did);
+                relax_value(did, curr);
             }
 
 
@@ -467,15 +466,15 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                     // LEFT
                     weight = max(distance(route[curr.route-1], curr_coord, adj_coord), curr_dist);
                     did = diagram_id(curr.node, curr.route-1, diagram_id::VERTICAL, weight);
-                    relax_value(did);
+                    relax_value(did, curr);
                     // BOTTOM
                     weight = max(distance(curr_coord, route[curr.route-1], route[curr.route]), curr_dist);
                     did = diagram_id(curr.node, curr.route-1, diagram_id::HORIZONTAL, weight);
-                    relax_value(did);
+                    relax_value(did, curr);
                     // TOP
                     weight = max(distance(adj_coord, route[curr.route-1], route[curr.route]), curr_dist);
                     did = diagram_id(adj, curr.route-1, diagram_id::HORIZONTAL, weight);
-                    relax_value(did);
+                    relax_value(did, curr);
                 }
 
                 if (curr.route < route.size()-1)
@@ -485,22 +484,51 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                     // RIGHT
                     weight = max(distance(route[curr.route+1], curr_coord, adj_coord), curr_dist);
                     did = diagram_id(curr.node, curr.route+1, diagram_id::VERTICAL, weight);
-                    relax_value(did);
+                    relax_value(did, curr);
                     // BOTTOM
                     weight = max(distance(curr_coord, route[curr.route], route[curr.route+1]), curr_dist);
                     did = diagram_id(curr.node, curr.route+1, diagram_id::HORIZONTAL, weight);
-                    relax_value(did);
+                    relax_value(did, curr);
                     // TOP
                     weight = max(distance(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
                     did = diagram_id(adj, curr.route+1, diagram_id::HORIZONTAL, weight);
-                    relax_value(did);
+                    relax_value(did, curr);
 
                 }
             }
 
         }
+
+        curr = pop_value();
     }
 
+    vector<geom_id> matched_route;
+    double res = 0;
+    for (size_t i = 0; i < route.size(); ++i)
+    {
+        matched_route.push_back(curr.node);
+        curr = optimal.find(curr)->second;
+    }
+    reverse(matched_route.begin(), matched_route.end());
+
+    int j = 0;
+    for (size_t i = 0; i < matched_route.size(); ++i)
+    {
+        geom_id id = matched_route[i];
+
+        if (id.is_internal())
+            out.setEstimation(i, id.eid, 1.0);
+        else
+        {
+            j += 1;
+            vector<const Edge*> all = graph.outgoing(id.gid);
+            const Edge *edge = *find_if(all.begin(), all.end(),
+                                        [&id](const Edge *edge) { return (edge->to == id.gid) || (edge->from == id.gid); });
+            out.setEstimation(i, edge->id, 1.0);
+        }
+    }
+
+    cout << j << endl;
 
     return out;
 }

@@ -51,19 +51,19 @@ int main()
 
     RoadGraph graph;
 
-    auto tree = construct(index_id);
-    Input input("../data/test/input.txt", true);
-    graph.loadUTM("../data/test/nodes.txt", "../data/test/edges.txt", "../data/test/edgegeometry.txt");
-    Output output = mmatch::match_frechet(graph, tree.get(), input);
-
-//    string dataset = "02";
-//    graph.loadBinary("../data/graph.dat");
-//    Input input("../data/input/input_" + dataset + ".txt");
-//    auto tree = load(file_prefix, index_id);
+//    auto tree = construct(index_id);
+//    Input input("../data/test/input.txt", true);
+//    graph.loadUTM("../data/test/nodes.txt", "../data/test/edges.txt", "../data/test/edgegeometry.txt");
 //    Output output = mmatch::match_frechet(graph, tree.get(), input);
+
+    string dataset = "05";
+    graph.loadBinary("../data/graph.dat");
+    Input input("../data/input/input_" + dataset + ".500.txt");
+    auto tree = load(file_prefix, index_id);
+    Output output = mmatch::match_frechet(graph, tree.get(), input);
 //    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
-//    Output about("../data/output/output_" + dataset + ".txt");
-//    cout << output.evaluate(about) << endl;
+    Output about("../data/output/output_" + dataset + ".500.txt");
+    cout << output.evaluate(about) << endl;
 
 
 
