@@ -402,7 +402,7 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     MapPoint query(route[0]);
     MapNeighborVisitor visitor;
     // initialisation step, searching for several nearest points
-    tree->nearestNeighborQuery(10, query, visitor);
+    tree->nearestNeighborQuery(100, query, visitor);
     for (id_type src : visitor.neighbors)
     {
         geom_id id = graph.edge(EDGE_ID(src))->geometry_id(GEOM_ID(src));
@@ -415,17 +415,22 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     {
         diagram_id curr = pop_value();
 
+        if (curr.route == route.size()-1)
+        {
+            cout << curr << endl;
+            break;
+        }
+
+        if (curr.weight > 100 && curr.route > 400)
+            cout << curr.weight << " " << curr.route << endl;
 
         UTMNode curr_coord = graph.coord(curr.node);
-        cout << curr << " " << curr_coord << endl;
 
         // CHECK IF THIS CAN INFLUENCE ANYTHING
         double curr_dist = dist[curr];
 
         if (curr.type == diagram_id::HORIZONTAL)
         {
-
-
             for (geom_id adj : graph.adjacent(curr.node))
             {
                 UTMNode adj_coord = graph.coord(adj);
@@ -444,8 +449,6 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                 weight = max(distance(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
                 did = diagram_id(adj, curr.route, diagram_id::HORIZONTAL, weight);
                 relax_value(did);
-
-                cout << adj << " : " << weight << endl;
             }
 
 
@@ -493,17 +496,9 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                     relax_value(did);
 
                 }
-
-
-
-                cout << adj << ":" << weight << endl;
             }
 
-
         }
-
-        cout << endl;
-
     }
 
 
