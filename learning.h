@@ -32,9 +32,6 @@ double avgDistance(const RoadGraph &graph, const Input &input, const Output &out
 //! incremental algorithm
 Output match(const RoadGraph &graph, ISpatialIndex *index, const Input &input);
 
-//! incremental algo. with backtracing
-Output backtracingMatch(const RoadGraph &graph, ISpatialIndex *index, const Input& input);
-
 //! backtracing algo
 Output backtracing_match(const RoadGraph &graph, ISpatialIndex *tree, const Input &input, const double max_error = MAX_ERROR);
 

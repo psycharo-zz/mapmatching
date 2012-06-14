@@ -16,6 +16,58 @@ using namespace mmatch;
 namespace mmatch {
 
 
+//! identifying shared point, does not belong to any edge
+static const int32_t EID_COMMON = -1;
+
+/*!
+ * \brief The geom_id struct. used as a unique id for all the geometrical nodes
+ * (including edge geometry) in the graph
+ */
+struct geom_id
+{
+    int32_t eid;
+    int32_t gid;
+
+    geom_id(int32_t _eid, int32_t _gid):
+        eid(_eid),
+        gid(_gid)
+    {}
+
+    inline bool operator<(const geom_id &other) const
+    {
+        return (eid == other.eid) ? gid < other.gid : eid < other.eid;
+    }
+
+    inline bool operator==(const geom_id &other) const
+    {
+        return (eid == other.eid) && (gid == other.gid);
+    }
+
+    inline bool operator!=(const geom_id &other) const
+    {
+        return !(*this == other);
+    }
+
+    inline bool is_internal() const
+    {
+        return eid != EID_COMMON;
+    }
+
+};
+
+
+
+inline std::ostream &operator<<(std::ostream &os, const geom_id &id)
+{
+    if (id.is_internal())
+        os << "edge(" << id.eid << ", " << id.gid << ")";
+    else
+        os << "node(" << id.gid << ")";
+    return os;
+}
+
+
+
 /**
  * @brief The Edge class
  */
@@ -113,6 +165,20 @@ public:
 
 } // namespace mmatch
 
+
+// hash function for geom_id
+namespace std
+{
+template <>
+class hash<geom_id>
+{
+public :
+    size_t operator()(const geom_id &x) const
+    {
+        return size_t((int64_t(x.eid) << 32) & x.gid);
+    }
+};
+}
 
 
 #endif // GRAPH_H

@@ -44,6 +44,8 @@ shared_ptr<ISpatialIndex> construct(id_type index_id)
     return tree;
 }
 
+#include <ctime>
+
 int main()
 {
     string file_prefix = "alldata";
@@ -51,17 +53,14 @@ int main()
 
     RoadGraph graph;
 
-//    auto tree = construct(index_id);
-//    Input input("../data/test/input.txt", true);
-//    graph.loadUTM("../data/test/nodes.txt", "../data/test/edges.txt", "../data/test/edgegeometry.txt");
-//    Output output = mmatch::match_frechet(graph, tree.get(), input);
-
-    string dataset = "05";
+    string dataset = "02";
     graph.loadBinary("../data/graph.dat");
     Input input("../data/input/input_" + dataset + ".500.txt");
     auto tree = load(file_prefix, index_id);
+
+    clock_t time = clock();
     Output output = mmatch::match_frechet(graph, tree.get(), input);
-//    Output output = mmatch::backtracing_match(graph, tree.get(), input, 100);
+    cout << "finished in: " << double(clock() - time) / (CLOCKS_PER_SEC) << endl;
     Output about("../data/output/output_" + dataset + ".500.txt");
     cout << output.evaluate(about) << endl;
 
