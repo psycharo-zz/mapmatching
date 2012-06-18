@@ -94,6 +94,10 @@ public:
         return x*x + y*y;
     }
 
+    bool operator == (const UTMNode &other) const
+    {
+        return (x == other.x) && (y == other.y);
+    }
 };
 
 

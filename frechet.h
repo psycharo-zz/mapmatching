@@ -18,11 +18,15 @@ namespace mmatch
 
 
 static const size_t NN_NUMBER_GLOBAL = 10000;
-static const double MAX_ERROR_GLOBAL = 2000;
+static const double MAX_ERROR_GLOBAL = 1200;
 
 
 //! frechet-based algorithm
-Output match_frechet(const RoadGraph &graph, ISpatialIndex *index, const Input &input);
+Output match_frechet(const RoadGraph &graph, ISpatialIndex *index, const Input &input, const double max_error = MAX_ERROR_GLOBAL);
+
+//! frechet-based algorithm, based on the output, can re-split the input into several parts
+Output match_frechet_smart(const RoadGraph &graph, ISpatialIndex *index, const Input &input);
+
 
 
 ////! weak frechet-based

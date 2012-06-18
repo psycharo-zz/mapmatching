@@ -18,6 +18,7 @@ Input::Input(const std::string &fileName, bool utm)
 
 void Input::load(const std::string &fileName)
 {
+    m_path = fileName;
     std::ifstream ifinput(fileName);
 
     if (!ifinput.is_open())
@@ -45,6 +46,7 @@ void Input::load(const std::string &fileName)
 
 void Input::loadUTM(const std::string &fileName)
 {
+    m_path = fileName;
     std::ifstream ifinput(fileName);
 
     if (!ifinput.is_open())
@@ -69,6 +71,39 @@ void Input::loadUTM(const std::string &fileName)
     }
 }
 
+
+vector<Input> Input::split(size_t parts) const
+{
+    vector<Input> result;
+
+    size_t step = m_nodes.size() / (parts-1);
+    size_t i = 0;
+    while (i + step < m_nodes.size())
+    {
+        result.push_back(Input(vector<UTMNode>(m_nodes.begin() + i, m_nodes.begin() + i + step)));
+        i += step;
+    }
+    if (i + step > m_nodes.size())
+    {
+        result.push_back(Input(vector<UTMNode>(begin(m_nodes) + i, end(m_nodes))));
+    }
+
+    return result;
+}
+
+Input Input::merge(const vector<Input> &result) const
+{
+    vector<UTMNode> res;
+    for (const Input &input : result)
+        res.insert(res.end(), input.m_nodes.begin(), input.m_nodes.end());
+    return Input(res);
+}
+
+
+Input::Input(const std::vector<UTMNode> &nodes):
+    m_nodes(nodes)
+{
+}
 
 
 
@@ -130,3 +165,19 @@ double Output::evaluate(const Output &according) const
     }
     return result / estimates().size();
 }
+
+
+Output Output::merge(const vector<Output> &result) const
+{
+    vector<Estimate> res;
+    for (const Output &output : result)
+        res.insert(res.end(), output.m_estmns.begin(), output.m_estmns.end());
+    return Output(res);
+}
+
+Output::Output(std::vector<Estimate> &estimates):
+    m_estmns(estimates)
+{
+
+}
+

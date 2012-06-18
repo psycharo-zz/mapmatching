@@ -303,8 +303,7 @@ public :
 
 
 
-
-Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const Input &input)
+Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const Input &input, const double max_error)
 {
     Output out(input);
 
@@ -318,9 +317,9 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     unordered_map<diagram_id, diagram_id> optimal(BUCKETS);
 
 
-    auto update_value = [&dist, &queue, &index] (const diagram_id &id)
+    auto update_value = [&dist, &queue, &index, &max_error] (const diagram_id &id)
     {
-        if (id.weight < MAX_ERROR_GLOBAL)
+        if (id.weight < max_error)
         {
             // if such a value already exists
             if (index.count(id))
@@ -471,16 +470,19 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
         curr = pop_value();
     }
 
+    if (optimal.size() == 0)
+        return Output();
+
     vector<geom_id> matched;
     for (size_t i = 0; i < route.size(); ++i)
     {
         matched.push_back(curr.node);
-        curr = optimal.find(curr)->second;
+        if (optimal.find(curr) != optimal.end())
+            curr = optimal.find(curr)->second;
     }
     reverse(matched.begin(), matched.end());
 
     size_t prev = 0;
-
     size_t count = 0;
     for (size_t i = 1; i < matched.size(); ++i)
     {
@@ -506,12 +508,27 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
             ++count;
         }
     }
-
-    cout << double(count) / route.size() << endl;
+    out.setError(curr.weight);
 
     return out;
 }
 
 
+
+Output mmatch::match_frechet_smart(const RoadGraph &graph, ISpatialIndex *index, const Input &input)
+{
+    const size_t NUM_PARTS = 10;
+    vector<Input> inputs = input.split(NUM_PARTS);
+
+    vector<Output> result;
+    for (const Input &i : inputs)
+    {
+//        cout << "current input:" << i.nodes().size() << endl;
+        result.push_back(match_frechet(graph, index, i));
+    }
+
+
+    return Output(result);
+}
 
 

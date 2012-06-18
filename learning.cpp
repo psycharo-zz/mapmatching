@@ -149,7 +149,7 @@ Output mmatch::match(const RoadGraph &graph, ISpatialIndex *tree, const Input &i
         }
 
         // DEBUG
-        out.getMaxError() = minMeasure > out.getMaxError() ? minMeasure : out.getMaxError();
+        out.maxError() = minMeasure > out.maxError() ? minMeasure : out.maxError();
 //        cout << i << " " << ceid << " " << minMeasure << endl;
 
         out.setEstimation(i, ceid, 1.0);
@@ -227,6 +227,25 @@ multiset<GeometryEdge> get_candidates(const RoadGraph &graph, const GeometryEdge
         candidates.insert(adj_edge);
     }
     return candidates;
+}
+
+
+Output mmatch::backtracing_match_smart(const RoadGraph &graph, ISpatialIndex *tree, const Input &input)
+{
+    Output result;
+
+    double curr_error = MIN_ERROR_LOCAL;
+    while (curr_error < MAX_ERROR_LOCAL)
+    {
+        result = backtracing_match(graph, tree, input, curr_error);
+        if (result.size() != 0)
+        {
+            result.setError(curr_error);
+            break;
+        }
+        curr_error *= 2;
+    }
+    return result;
 }
 
 
@@ -323,6 +342,9 @@ Output mmatch::backtracing_match(const RoadGraph &graph, ISpatialIndex *tree, co
             }
         }
     }
+
+    if (!found || matched_route.size() != input.size())
+        return Output();
 
     assert(found && matched_route.size() == input.size());
 

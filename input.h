@@ -21,13 +21,23 @@ public:
 
     void loadUTM(const std::string &fileName);
 
+    std::vector<Input> split(size_t parts) const;
+
+    Input merge(const std::vector<Input> &result) const;
+
     inline const UTMNode& operator[](size_t i) const { return m_nodes[i]; }
 
     inline const size_t size() const { return m_nodes.size(); }
 
     inline const std::vector<UTMNode> &nodes() const { return m_nodes;}
+
+    inline const std::string &path() { return m_path; }
+
 private:
     std::vector<UTMNode> m_nodes;
+    std::string m_path;
+
+    Input(const std::vector<UTMNode> &nodes);
 };
 
 
@@ -50,6 +60,11 @@ public:
             confidence(-1)
         {}
 
+        Estimate(const Estimate &other)
+        {
+            *this = other;
+        }
+
         Estimate(int32_t _edge, float _conf):
             edge(_edge),
             confidence(_conf)
@@ -58,12 +73,12 @@ public:
 
     Output(size_t size = 0):
         m_estmns(size),
-        maxError(0.0)
+        m_maxError(0.0)
     {}
 
     Output(const Input &input):
         m_estmns(input.nodes().size()),
-        maxError(0.0)
+        m_maxError(0.0)
     {}
 
     Output(const std::string &fileName)
@@ -71,6 +86,10 @@ public:
         load(fileName);
     }
 
+    Output(const std::vector<Output> &outs)
+    {
+        *this = merge(outs);
+    }
 
     //! load output from file
     void load(const std::string &fileName);
@@ -87,9 +106,12 @@ public:
         m_estmns[id] = Estimate(edge, confidence);
     }
 
+    //! set overall error value
+    inline void setError(double error) { m_maxError = error; }
+
     //! data accessor
     inline const std::vector<Estimate> &estimates() const { return m_estmns; }
-    inline float& getMaxError() { return maxError; } // TODO : set it more private
+    inline float& maxError() { return m_maxError; } // TODO : set it more private
 
     inline int32_t edge(int32_t id) const { return m_estmns[id].edge; }
     inline float confidence(int32_t id) const { return m_estmns[id].confidence; }
@@ -97,10 +119,15 @@ public:
     inline size_t size() const { return m_estmns.size(); }
 
     //! result validator, i.e. check if all matched edges are connected
-    bool validate(const RoadGraph& );
+//    bool validate(const RoadGraph& );
 private:
-    float maxError;
+    float m_maxError;
     std::vector<Estimate> m_estmns;
+
+    Output(std::vector<Estimate> &estimates);
+
+    //! merge two outputs
+    Output merge(const std::vector<Output> &result) const;
 
 }; // end of class Output
 
