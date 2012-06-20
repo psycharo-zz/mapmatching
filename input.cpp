@@ -84,7 +84,8 @@ vector<Input> Input::split(size_t parts) const
         result.push_back(Input(vector<UTMNode>(m_nodes.begin() + i, m_nodes.begin() + i + step)));
         i += step;
     }
-    if (i + step >= m_nodes.size())
+    cout << i << " " << step << " " << m_nodes.size() << endl;
+    if (i < m_nodes.size())
         result.push_back(Input(vector<UTMNode>(begin(m_nodes) + i, end(m_nodes))));
 
 
@@ -170,13 +171,18 @@ double Output::evaluate(const Output &according) const
 Output Output::merge(const vector<Output> &result) const
 {
     vector<Estimate> res;
+    double error = 0;
     for (const Output &output : result)
+    {
+        error = max(error, output.maxError());
         res.insert(res.end(), output.m_estmns.begin(), output.m_estmns.end());
-    return Output(res);
+    }
+    return Output(res, error);
 }
 
-Output::Output(std::vector<Estimate> &estimates):
-    m_estmns(estimates)
+Output::Output(std::vector<Estimate> &estimates, double maxError):
+    m_estmns(estimates),
+    m_maxError(maxError)
 {
 
 }

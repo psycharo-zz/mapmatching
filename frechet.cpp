@@ -181,7 +181,8 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
 
     auto route = input.nodes();
 
-    assert(route.size() >= 2);
+    if (route.size() <= 1)
+        return out;
 
     MapPoint query(route[0]);
     MapNeighborVisitor visitor;
@@ -294,10 +295,9 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
 
     if (optimal.size() == 0 || curr.route != route.size()-1)
     {
-        Output output;
-        output.setError(sqrt(curr.weight));
+        out.setError(sqrt(curr.weight));
 //        cout << "max route:" << route_max << " " << output.maxError() << endl;
-        return output;
+        return out;
     }
 
     // first match the f
@@ -341,21 +341,26 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
 }
 
 
-Output mmatch::match_frechet_smart(const RoadGraph &graph, ISpatialIndex *index, const Input &input)
+Output mmatch::match_frechet_smart(const RoadGraph &graph, ISpatialIndex *index, const Input &input, size_t num_retries)
 {
-    const size_t NUM_PARTS = 10;
+    const size_t NUM_PARTS = 5;
     vector<Input> inputs = input.split(NUM_PARTS);
 
     vector<Output> result;
+
     for (const Input &i : inputs)
     {
-        cout << "size:" << i.size() << endl;
-        Output out = match_frechet(graph, index, i, MAX_CONSIDERED_AREA);
-        if (out.size() != i.size())
+        Output out;
+
+        double max_area = MAX_CONSIDERED_AREA;
+        int retry = 0;
+        while (out.size() != i.size() && retry < num_retries)
         {
-            // TODO:
-            cout << "NOT FOUND" << endl;
+            out = match_frechet(graph, index, i, max_area);
+            max_area *= 2;
+            retry += 1;
         }
+        cout << out.size() << endl;
         result.push_back(out);
     }
 

@@ -149,7 +149,8 @@ Output mmatch::match(const RoadGraph &graph, ISpatialIndex *tree, const Input &i
         }
 
         // DEBUG
-        out.maxError() = minMeasure > out.maxError() ? minMeasure : out.maxError();
+        out.setError(minMeasure > out.maxError() ? minMeasure : out.maxError());
+//        out.maxError() = ;
 //        cout << i << " " << ceid << " " << minMeasure << endl;
 
         out.setEstimation(i, ceid, 1.0);

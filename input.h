@@ -111,7 +111,7 @@ public:
 
     //! data accessor
     inline const std::vector<Estimate> &estimates() const { return m_estmns; }
-    inline float& maxError() { return m_maxError; } // TODO : set it more private
+    inline double maxError() const { return m_maxError; } // TODO : set it more private
 
     inline int32_t edge(int32_t id) const { return m_estmns[id].edge; }
     inline float confidence(int32_t id) const { return m_estmns[id].confidence; }
@@ -124,7 +124,7 @@ private:
     float m_maxError;
     std::vector<Estimate> m_estmns;
 
-    Output(std::vector<Estimate> &estimates);
+    Output(std::vector<Estimate> &estimates, double maxError = -1);
 
     //! merge two outputs
     Output merge(const std::vector<Output> &result) const;

@@ -101,8 +101,9 @@ int main()
     string file_prefix = "alldata";
     id_type index_id = 1;
 
-    for (size_t i = 5; i <= 5; i++)
+    for (size_t i = 4; i <= 10; i++)
     {
+
         RoadGraph graph;
         unique_ptr<ISpatialIndex> tree = load(file_prefix, index_id);
         graph.loadBinary("../data/graph.dat");
@@ -112,9 +113,7 @@ int main()
         Input input("../data/input/input_" + dataset);
         Output test_output("../data/output/output_" + dataset);
 
-//        Output out = mmatch::match_frechet_smart(graph, tree.get(), input);
-        run_experiment(cout, "global", dataset, input, test_output, graph, tree.get());
-        run_experiment(cout, "incrsmart", dataset, input, test_output, graph, tree.get());
+        run_experiment(cout, "smartglobal", dataset, input, test_output, graph, tree.get());
     }
 
     return 0;
