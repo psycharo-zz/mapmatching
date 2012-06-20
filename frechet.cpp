@@ -343,7 +343,6 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
 
 Output mmatch::match_frechet_smart(const RoadGraph &graph, ISpatialIndex *index, const Input &input, size_t num_retries)
 {
-    const size_t NUM_PARTS = 5;
     vector<Input> inputs = input.split(NUM_PARTS);
 
     vector<Output> result;
@@ -354,13 +353,12 @@ Output mmatch::match_frechet_smart(const RoadGraph &graph, ISpatialIndex *index,
 
         double max_area = MAX_CONSIDERED_AREA;
         int retry = 0;
-        while (out.size() != i.size() && retry < num_retries)
+        while (out.size() != i.size() || retry < num_retries)
         {
             out = match_frechet(graph, index, i, max_area);
-            max_area *= 2;
+            max_area *= 1.5;
             retry += 1;
         }
-        cout << out.size() << endl;
         result.push_back(out);
     }
 

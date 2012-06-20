@@ -101,9 +101,25 @@ int main()
     string file_prefix = "alldata";
     id_type index_id = 1;
 
-    for (size_t i = 4; i <= 10; i++)
+    auto fixed = {3,5,6,9,10};
+    for (size_t i : fixed)
     {
+        RoadGraph graph;
+        unique_ptr<ISpatialIndex> tree = load(file_prefix, index_id);
+        graph.loadBinary("../data/graph.dat");
 
+        string dataset = (i < 10 ? "0" : "") + to_string(i) + ".txt";
+
+        Input input("../data/input/input_" + dataset);
+        Output test_output("../data/output/output_" + dataset);
+
+        run_experiment(cout, "global", dataset, input, test_output, graph, tree.get());
+        run_experiment(cout, "incrsmart", dataset, input, test_output, graph, tree.get());
+    }
+
+    auto smart_fixed = {6,7,8};
+    for (size_t i : smart_fixed)
+    {
         RoadGraph graph;
         unique_ptr<ISpatialIndex> tree = load(file_prefix, index_id);
         graph.loadBinary("../data/graph.dat");
@@ -114,6 +130,7 @@ int main()
         Output test_output("../data/output/output_" + dataset);
 
         run_experiment(cout, "smartglobal", dataset, input, test_output, graph, tree.get());
+        run_experiment(cout, "incrsmart", dataset, input, test_output, graph, tree.get());
     }
 
     return 0;

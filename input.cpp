@@ -84,7 +84,6 @@ vector<Input> Input::split(size_t parts) const
         result.push_back(Input(vector<UTMNode>(m_nodes.begin() + i, m_nodes.begin() + i + step)));
         i += step;
     }
-    cout << i << " " << step << " " << m_nodes.size() << endl;
     if (i < m_nodes.size())
         result.push_back(Input(vector<UTMNode>(begin(m_nodes) + i, end(m_nodes))));
 
