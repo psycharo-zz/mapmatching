@@ -196,10 +196,18 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
         update_value(diagram_id(id, 0, diagram_id::HORIZONTAL, weight));
     }
 
+
+    size_t route_max = 0;
     diagram_id curr;
     while (!queue.empty())
     {
         curr = pop_value();
+
+        if (curr.route > route_max)
+        {
+            cout << curr.route << endl;
+            route_max = curr.route;
+        }
 
         if (curr.route == route.size()-1)
             break;
