@@ -76,17 +76,17 @@ vector<Input> Input::split(size_t parts) const
 {
     vector<Input> result;
 
-    size_t step = m_nodes.size() / (parts-1);
+    size_t step = m_nodes.size() / parts;
+
     size_t i = 0;
     while (i + step < m_nodes.size())
     {
         result.push_back(Input(vector<UTMNode>(m_nodes.begin() + i, m_nodes.begin() + i + step)));
         i += step;
     }
-    if (i + step > m_nodes.size())
-    {
+    if (i + step >= m_nodes.size())
         result.push_back(Input(vector<UTMNode>(begin(m_nodes) + i, end(m_nodes))));
-    }
+
 
     return result;
 }

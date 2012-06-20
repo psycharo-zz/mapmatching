@@ -61,7 +61,7 @@ void run_experiment(ostream &out,
     if (type == "global")
     {
         clock_t time = clock();
-        output = mmatch::match_frechet(graph, index, input);
+        output = mmatch::match_frechet(graph, index, input, MAX_CONSIDERED_AREA);
         res_time = double(clock() - time) / (CLOCKS_PER_SEC);
     }
     else if (type == "smartglobal")
@@ -101,49 +101,21 @@ int main()
     string file_prefix = "alldata";
     id_type index_id = 1;
 
-//    size_t i = 8;
-//    string dataset = (i < 10 ? "0" : "") + to_string(i) + ".txt";
-//    Input input("../data/input/input_" + dataset);
-//    Output test_output("../data/output/output_" + dataset);
-
-//    Output smart_result = mmatch::match_frechet_smart(graph, tree.get(), input);
-//    cout << smart_result.evaluate(test_output) << endl;
-
-//    Output result = mmatch::match_frechet(graph, tree.get(), input);
-//    cout << result.evaluate(test_output) << endl;
-
-    for (size_t i = 1; i <= 10; i++)
+    for (size_t i = 5; i <= 5; i++)
     {
-//        if (i == 4)
-//            continue;
         RoadGraph graph;
         unique_ptr<ISpatialIndex> tree = load(file_prefix, index_id);
         graph.loadBinary("../data/graph.dat");
-
-
 
         string dataset = (i < 10 ? "0" : "") + to_string(i) + ".txt";
 
         Input input("../data/input/input_" + dataset);
         Output test_output("../data/output/output_" + dataset);
 
+//        Output out = mmatch::match_frechet_smart(graph, tree.get(), input);
         run_experiment(cout, "global", dataset, input, test_output, graph, tree.get());
-
-//        run_experiment(cout, "incrsmart", dataset, input, test_output, graph, tree.get());
+        run_experiment(cout, "incrsmart", dataset, input, test_output, graph, tree.get());
     }
-
-
-//    cout << "frechet" << endl;
-//    time = clock();
-//    Output output_frechet = mmatch::match_frechet(graph, tree.get(), input);
-//    cout << output_frechet.evaluate(test_output) << endl;
-//    cout << "finished in: " << double(clock() - time) / (CLOCKS_PER_SEC) << endl;
-
-//    cout << "incremental" << endl;
-//    time = clock();
-//    Output output_incr = mmatch::backtracing_match(graph, tree.get(), input, 100);
-//    cout << output_incr.evaluate(test_output) << endl;
-//    cout << "finished in: " << double(clock() - time) / (CLOCKS_PER_SEC) << endl;
 
     return 0;
 }

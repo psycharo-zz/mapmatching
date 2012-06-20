@@ -16,45 +16,6 @@ typedef map<geom_id, vector<dblpair_t> > Diagram;
 
 
 
-
-
-void filter(vector<double> &results)
-{
-    if (results.size() == 0)
-        return;
-
-    double t1 = results[0];
-    double t2 = results[1];
-
-    if (t1 < 0)
-    {
-        if (t2 < 0)
-            results.clear(); // cout << "skipping:" << t1 << ":" << t2 << endl;
-        else if (t2 >= 0 && t2 <= 1)
-            results[0] = 0;   //          cout << "t1 inside:" << 0 << ":" << t2 << ":" << param(route[rid], route[rid+1], t2) << endl;
-        else if (t2 > 1)
-        {
-            results[0] = 0;
-            results[1] = 1; // cout << "completely inside:" << t1 << ":" << t2 << endl;
-        }
-    }
-    else if (t1 >= 0 && t1 <= 1)
-    {
-        // t2 < 0 - not possible
-        assert(t2 >= 0);
-        if (t2 >= 0 && t2 <= 1)
-            return; // cout << "as they are:" << t1 << ":" << t2 << endl;
-        else if (t2 > 1)
-            results[1] = 1; // cout << "t2 inside:" << t1 << ":" << 1 << param(route[rid], routde[rid+1], t2) << endl;
-    }
-    else if (t1 > 1)
-    {
-        assert(t2 > 1);
-        results.clear(); //         cout << "skipping:" << t1 << ":" << t2 << endl;
-    }
-}
-
-
 // removing almost identical
 vector<UTMNode> filter_input(const Input &input)
 {
@@ -66,160 +27,6 @@ vector<UTMNode> filter_input(const Input &input)
     }
     return route;
 }
-
-
-
-//Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *index, const Input &input)
-//{
-//    Output result(input);
-
-
-//    size_t iteration = 0;
-//    cout << "--------------------------" << endl;
-//    cout << "input size before filtering: " << input.nodes().size() << endl;
-//    auto route = filter_input(input);
-//    cout << "input size after filtering: " << route.size() << endl;
-//    cout << "--------------------------" << endl;
-
-//    cout << "starting horizontal diagram builder" << endl;
-
-//    // DEBUG
-//    double error = 10;
-
-//    // NOTE: THIS IS GRAPH EDGES, while we're working with geometrical edges
-//    auto graph_edges = graph.index();
-//    auto graph_nodes = graph.nodes();
-
-
-//    Diagram hor_diagram;
-//    // computing one-dimensional diagram for all the geometrical nodes
-//    size_t iterations = 0;
-//    //
-//    vector<dblpair_t> widths(route.size()-1);
-
-//    for (const Edge *edge : graph_edges)
-//    {
-//        ++iterations;
-//        if (iterations % 100000 == 0)
-//            cout << iterations << endl;
-
-//        // checking whether the
-//        double length = edge->length;
-//        UTMNode ep = graph_nodes[edge->from];
-//        bool need_check = false;
-//        for (const UTMNode &r : route)
-//            if (distance(r, ep) - error < length)
-//                need_check = true;
-//        if (!need_check)
-//            continue;
-
-//        auto geom = edge->geometry;
-//        size_t geom_size = geom.size();
-//        for (int32_t gid = 0; gid < geom_size; ++gid)
-//        {
-//            // this is the read node id
-//            geom_id curr_id = edge->geometry_id(gid);
-
-//            size_t count = 0;
-//            // for all the route edges, saving c & d
-//            for (int32_t rid = 0; rid < route.size()-1; ++rid)
-//            {
-//                auto result = line_circle_distance(route[rid], route[rid+1], geom[gid], error);
-//                filter(result);
-//                if (result.size() > 0)
-//                {
-//                    widths[rid] = dblpair_t(result[0], result[1]);
-//                    ++count;
-//                }
-//                else
-//                    widths[rid] = dblpair_t(1, 0);
-//            }
-
-//            if (count > 0)
-//                hor_diagram[curr_id] = widths;
-//        }
-//    }
-//    cout << "horizontal diagram size:" << hor_diagram.size() << endl;
-//    cout << "------------------------" << endl;
-
-
-//    cout << "starting vertical diagram builder" << endl;
-//    // for each (i,j) \in E, we have k =(route.size()) a, b (vertical spikes)
-//    map<geom_id, Diagram> vert_diagram;
-//    vector<dblpair_t> heights(route.size());
-
-//    iteration = 0;
-//    for (const Edge *edge : graph_edges)
-//    {
-//        ++iteration;
-//        if (iteration % 100000 == 0)
-//            cout << iteration << endl;
-
-////         checking whether the
-//        UTMNode ep = graph_nodes[edge->from];
-//        double length = edge->length;
-//        bool check_needed = false;
-//        for (const UTMNode &r : route)
-//            if (distance(r, ep) - error < length)
-//                check_needed = true;
-//        if (!check_needed)
-//            continue;
-
-
-//        size_t geom_size = edge->geometry.size();
-//        for (int32_t gid = 0; gid < geom_size; ++gid)
-//        {
-//            geom_id curr_id = edge->geometry_id(gid);
-//            // now getting all the adjacent edges
-//            for (geom_id adj : graph.adjacent(curr_id))
-//            {
-
-//                size_t count = 0;
-//                for (int32_t rid = 0; rid < route.size(); ++rid)
-//                {
-//                    auto result = line_circle_distance(graph.coord(curr_id), graph.coord(adj), route[rid], error);
-//                    filter(result);
-//                    if (result.size() > 0)
-//                    {
-//                        heights[rid] = dblpair_t(result[0], result[1]);
-//                        count += 1;
-//                    }
-//                    else
-//                        heights[rid] = dblpair_t(1, 0);
-//                }
-//                if (count > 0)
-//                    vert_diagram[curr_id][adj] = heights;
-//            }
-//        }
-//    }
-
-//    cout << "vertical diagram size:" << vert_diagram.size() << endl;
-//    cout << "----------------------" << endl;
-
-//    // the priority queue Q
-//    priority_queue<Interval> queue;
-
-//    // putting all degenerate intervals starting from the leftmost point
-
-//    while (!queue.empty())
-//    {
-//        Interval interval = queue.top();
-//        queue.pop();
-
-//        cout << interval << endl;
-
-
-//        if (true) // actually found the solution
-//        {
-
-//        }
-//    }
-
-//    return result;
-//}
-
-
-
 
 
 
@@ -243,6 +50,10 @@ struct diagram_id
     Type type;
     // the node weight (distance from the route)
     double weight;
+
+    diagram_id():
+        node(-1,-1),route(-1),type(TARGET),weight(0)
+    {}
 
     diagram_id(geom_id _node, int32_t _route, Type _tp, double _weight):
         node(_node),route(_route),type(_tp),weight(_weight)
@@ -303,23 +114,20 @@ public :
 
 
 
-Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const Input &input, const double max_error)
+Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const Input &input, const double max_error2)
 {
     Output out(input);
 
     // mapping diagram_id to its weight
     unordered_map<diagram_id, double> dist;
 
-    static const size_t BUCKETS = 100000;
-
     multiset<diagram_id> queue;
     unordered_map<diagram_id, multiset<diagram_id>::iterator> index(BUCKETS);
     unordered_map<diagram_id, diagram_id> optimal(BUCKETS);
 
-
-    auto update_value = [&dist, &queue, &index, &max_error] (const diagram_id &id)
+    auto update_value = [&dist, &queue, &index, &max_error2] (const diagram_id &id)
     {
-        if (id.weight < max_error)
+        if (id.weight < max_error2)
         {
             // if such a value already exists
             if (index.count(id))
@@ -379,6 +187,8 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
     MapNeighborVisitor visitor;
     // initialisation step, searching for several nearest points
     tree->nearestNeighborQuery(NN_NUMBER_GLOBAL, query, visitor);
+
+
     for (id_type src : visitor.neighbors)
     {
         geom_id id = graph.edge(EDGE_ID(src))->geometry_id(GEOM_ID(src));
@@ -386,9 +196,11 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
         update_value(diagram_id(id, 0, diagram_id::HORIZONTAL, weight));
     }
 
-    diagram_id curr = pop_value();
+    diagram_id curr;
     while (!queue.empty())
     {
+        curr = pop_value();
+
         if (curr.route == route.size()-1)
             break;
 
@@ -417,6 +229,7 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                 weight = max(distance2(adj_coord, route[curr.route], route[curr.route+1]), curr_dist);
                 did = diagram_id(adj, curr.route, diagram_id::HORIZONTAL, weight);
                 relax_value(did, curr);
+
             }
 
 
@@ -444,6 +257,7 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
                     weight = max(distance2(adj_coord, route[curr.route-1], route[curr.route]), curr_dist);
                     did = diagram_id(adj, curr.route-1, diagram_id::HORIZONTAL, weight);
                     relax_value(did, curr);
+
                 }
 
                 if (curr.route < route.size()-1)
@@ -470,49 +284,53 @@ Output mmatch::match_frechet(const RoadGraph &graph, ISpatialIndex *tree, const 
         curr = pop_value();
     }
 
-    if (optimal.size() == 0)
-        return Output();
-
-    vector<geom_id> matched;
-    for (size_t i = 0; i < route.size(); ++i)
+    if (optimal.size() == 0 || curr.route != route.size()-1)
     {
-        matched.push_back(curr.node);
-        if (optimal.find(curr) != optimal.end())
-            curr = optimal.find(curr)->second;
+        Output output;
+        output.setError(sqrt(curr.weight));
+//        cout << "max route:" << route_max << " " << output.maxError() << endl;
+        return output;
     }
-    reverse(matched.begin(), matched.end());
 
-    size_t prev = 0;
-    size_t count = 0;
-    for (size_t i = 1; i < matched.size(); ++i)
+    // first match the f
+    int32_t prev_match = 0;
+    diagram_id next = curr;
+      // reconstructing the path
+    while (curr.route != 0)
     {
-        if (matched[i].is_internal() && !matched[prev].is_internal())
+        if (curr.node.is_internal())
         {
-            for (size_t j = prev; j <= i; ++j)
-                out.setEstimation(j, matched[i].eid, 1.0);
-            prev = i;
+            out.setEstimation(curr.route, curr.node.eid, 1.0);
+            prev_match = curr.node.eid;
         }
-        else if (matched[i].is_internal() && matched[prev].is_internal())
+        else if (next.node.is_internal())
         {
-            out.setEstimation(i, matched[i].eid, 1.0);
-            prev = i;
+            out.setEstimation(curr.route, next.node.eid, 1.0);
+            prev_match = next.node.eid;
         }
-        else if (!matched[i].is_internal() && matched[prev].is_internal())
+        else if (next.node != curr.node) // one by one different ids
         {
-            out.setEstimation(i, matched[prev].eid, 1.0);
-            prev = i;
+            for (const Edge *e : graph.outgoing(curr.node.gid))
+            {
+                if (e->to == next.node.gid)
+                {
+                    out.setEstimation(curr.route, e->id, 1.0);
+                    prev_match = e->id;
+                }
+            }
         }
-        else if (matched[i] != matched[prev])
+        else // one by one same ids
         {
-            // TODO:?
-            ++count;
+            // just matching the last match
+            out.setEstimation(curr.route, prev_match, 1.0);
         }
+        curr = optimal[curr];
+        next = curr;
     }
-    out.setError(curr.weight);
-
+    out.setEstimation(curr.route, prev_match, 1.0);
+    out.setError(sqrt(curr.weight));
     return out;
 }
-
 
 
 Output mmatch::match_frechet_smart(const RoadGraph &graph, ISpatialIndex *index, const Input &input)
@@ -523,12 +341,19 @@ Output mmatch::match_frechet_smart(const RoadGraph &graph, ISpatialIndex *index,
     vector<Output> result;
     for (const Input &i : inputs)
     {
-//        cout << "current input:" << i.nodes().size() << endl;
-        result.push_back(match_frechet(graph, index, i));
+        cout << "size:" << i.size() << endl;
+        Output out = match_frechet(graph, index, i, MAX_CONSIDERED_AREA);
+        if (out.size() != i.size())
+        {
+            // TODO:
+            cout << "NOT FOUND" << endl;
+        }
+        result.push_back(out);
     }
 
 
     return Output(result);
 }
+
 
 
